@@ -55,13 +55,13 @@ h2{font-size:34px;margin:0 0 10px;letter-spacing:-.03em}
 .album-cover img{width:100%;height:100%;object-fit:cover}.album b{display:block}.album small{color:var(--muted)}
 .summary{max-width:760px;margin:34px auto 0;border:1px solid var(--line);background:var(--panel);border-radius:24px;padding:26px}
 .summary-row{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:13px 0}.summary-row:last-child{border-bottom:0}
-.battle{min-height:70vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
+.battle{min-height:calc(100vh - 150px);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:28px 0 40px}.battle .question{color:#b9c7dd;text-shadow:0 2px 14px #000}
 .question{color:var(--muted);letter-spacing:.18em;text-transform:uppercase;font-size:12px;font-weight:800;margin-bottom:22px}
 .duel{display:grid;grid-template-columns:1fr 1fr;gap:18px;width:min(900px,100%)}
-.song{border:1px solid var(--line);background:linear-gradient(180deg,#151923,#0d1016);border-radius:26px;padding:28px 20px;cursor:pointer;min-height:350px;transition:.18s;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.song{border:1px solid var(--line);background:linear-gradient(180deg,#151923,#0d1016);color:var(--text);border-radius:26px;padding:28px 20px;cursor:pointer;min-height:350px;transition:.18s;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 .song:hover{border-color:#737b8c;transform:translateY(-4px)}
 .song img{width:190px;height:190px;object-fit:cover;border-radius:16px;box-shadow:0 18px 40px #0008;margin-bottom:22px}
-.song-title{font-size:28px;font-weight:850;letter-spacing:-.035em}.song-album{color:var(--muted);margin-top:6px}
+.song-title{font-size:28px;font-weight:850;letter-spacing:-.035em;color:#f7f7f8;line-height:1.12;text-shadow:0 2px 14px #000}.song-album{color:#b8bfca;margin-top:8px;font-size:14px}
 .no-rank{margin-top:20px;color:#727887;font-size:12px}
 .results{max-width:900px;margin:auto}
 .rank-list{margin-top:24px;border:1px solid var(--line);border-radius:20px;overflow:hidden}
@@ -229,14 +229,14 @@ body:has(.home-screen.active) .logo {
 /* Interior do jogo: mesma atmosfera da home, mas mais discreta para não competir com as capas. */
 .screen:not(.home-screen){
   position:relative;
-  min-height:calc(100vh - 100px);
-  padding:8px 4px 34px;
+  min-height:calc(100vh - 56px);
+  padding:8px 4px 60px;
   isolation:isolate;
 }
 .screen:not(.home-screen)::before{
   content:"";
   position:absolute;
-  inset:-10px -24px 0;
+  inset:-120px -80px -120px;
   z-index:-2;
   pointer-events:none;
   background:
@@ -332,7 +332,7 @@ body:has(.home-screen.active) .logo {
 .auth-gate-btn{border:0;border-radius:999px;padding:14px 22px;background:var(--gold);color:#17120a;font-weight:900;cursor:pointer;box-shadow:0 10px 30px #0006;}
 .auth-gate-btn:disabled{opacity:.65;cursor:wait;}
 .auth-gate-status{margin-top:14px;color:var(--muted);font-size:12px;min-height:18px;}
-.app-version{position:fixed;right:14px;bottom:10px;z-index:80;color:#7f8795;font-size:10px;letter-spacing:.08em;font-weight:700;background:#090b10cc;border:1px solid #242a34;border-radius:999px;padding:6px 9px;backdrop-filter:blur(8px);pointer-events:none}
+.app-version{position:fixed;right:14px;bottom:10px;z-index:80;color:#9da5b3;font-size:10px;letter-spacing:.08em;font-weight:700;background:#090b10cc;border:1px solid #242a34;border-radius:999px;padding:6px 9px;backdrop-filter:blur(8px);pointer-events:none}
 </style>
 </head>
 <body>
@@ -345,7 +345,7 @@ body:has(.home-screen.active) .logo {
     <div class="auth-gate-status" id="authGateStatus">Verificando sua sessão…</div>
   </div>
 </div>
-<div class="app-version" id="appVersion">MJ SONG RANKER · v1.2.0 · CATÁLOGO 356</div>
+<div class="app-version" id="appVersion">MJ SONG RANKER · v1.2.1 · CATÁLOGO 356</div>
 <div class="app" id="mainApp">
   <div class="topbar" style="display:none" id="topbar">
     <div class="logo"><img src="assets/image-003.png" alt="MJ Song Ranker"></div>
@@ -672,7 +672,7 @@ const masterSongs = [{"title":"Zip-A-Dee-Doo-Dah","album":"Diana Ross Presents t
 // =========================
 // Persistência local (IndexedDB)
 // =========================
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.2.1';
 const CATALOG_VERSION = '356';
 const DB_NAME = 'MJSongRankerDB';
 const DB_VERSION = 1;
@@ -794,6 +794,9 @@ async function deleteSavedRanking(id){
   if(!id)return;
   if(!confirm('Excluir este ranking salvo?')) return;
   markRankingDeleted(id);
+  // Remove o card imediatamente da interface. A sincronização continua em segundo plano.
+  const card=document.querySelector(`.saved-delete-btn[data-ranking-id=\"${CSS.escape(id)}\"]`)?.closest('.save-item');
+  if(card){ card.style.transition='opacity .18s, transform .18s'; card.style.opacity='0'; card.style.transform='translateY(-4px)'; setTimeout(()=>card.remove(),180); }
   let localOk=true;
   try{await DB.delete(DB_STORES.rankings,id);}catch(err){localOk=false;console.warn('Falha ao excluir ranking local:',err);}
   let cloudOk=true;
