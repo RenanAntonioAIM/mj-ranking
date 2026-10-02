@@ -952,19 +952,165 @@ function startGame(){
   go('battle');
   saveActiveGame();
 }
+let finishPromise=null;
+function hasPath(fromId,toId){
+  if(fromId===toId) return true;
+  const adj=new Map();
+  matches.forEach(([a,b,w])=>{
+    const loser=(w===a)?b:a;
+    const winner=w;
+    if(!adj.has(winner)) adj.set(winner,[]);
+    adj.get(winner).push(loser);
+  });
+  const seen=new Set([fromId]);
+  const stack=[fromId];
+  while(stack.length){
+    const cur=stack.pop();
+    for(const next of (adj.get(cur)||[])){
+      if(next===toId) return true;
+      if(!seen.has(next)){seen.add(next);stack.push(next)}
+    }
+  }
+  return false;
+}
+function relation(aId,bId){
+  const ab=hasPath(aId,bId);
+  const ba=hasPath(bId,aId);
+  if(ab && !ba) return 1;   // a > b
+  if(ba && !ab) return -1;  // b > a
+  return 0;                 // ainda não determinado ou ciclo
+}
+function buildProvisionalOrder(){
+  // Topological sort of the currently known graph. When more than one
+  // song is available, shuffle the tied candidates so the UI does not
+  // suggest a false deterministic ranking before the evidence exists.
+  const ids=songs.map(s=>s.id);
+  const indegree=new Map(ids.map(id=>[id,0]));
+  const adj=new Map(ids.map(id=>[id,[]]));
+  matches.forEach(([a,b,w])=>{
+    const loser=w===a?b:a;
+    if(!adj.get(w).includes(loser)){
+      adj.get(w).push(loser);
+      indegree.set(loser,indegree.get(loser)+1);
+    }
+  });
+  const available=ids.filter(id=>indegree.get(id)===0);
+  const order=[];
+  while(available.length){
+    for(let i=available.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [available[i],available[j]]=[available[j],available[i]];
+    }
+    const id=available.shift();
+    order.push(id);
+    for(const next of adj.get(id)){
+      indegree.set(next,indegree.get(next)-1);
+      if(indegree.get(next)===0) available.push(next);
+    }
+  }
+  // A cycle should never happen from a consistent set of user choices.
+  // If one somehow exists, keep every song visible rather than silently dropping it.
+  if(order.length!==ids.length){
+    const missing=ids.filter(id=>!order.includes(id));
+    order.push(...missing);
+  }
+  return order.map(id=>songs.find(s=>s.id===id));
+}
+function directResult(aId,bId){
+  for(let i=matches.length-1;i>=0;i--){
+    const [a,b,w]=matches[i];
+    if((a===aId&&b===bId)||(a===bId&&b===aId)) return w;
+  }
+  return null;
+}
+function hasCycle(){
+  const ids=songs.map(s=>s.id);
+  const state=new Map(ids.map(id=>[id,0]));
+  const adj=new Map(ids.map(id=>[id,[]]));
+  matches.forEach(([a,b,w])=>{
+    const loser=w===a?b:a;
+    adj.get(w).push(loser);
+  });
+  function visit(id){
+    state.set(id,1);
+    for(const next of adj.get(id)){
+      if(state.get(next)===1) return true;
+      if(state.get(next)===0 && visit(next)) return true;
+    }
+    state.set(id,2);
+    return false;
+  }
+  return ids.some(id=>state.get(id)===0 && visit(id));
+}
+function getUnresolvedBoundary(){
+  const order=buildProvisionalOrder();
+  for(let i=0;i<order.length-1;i++){
+    if(relation(order[i].id,order[i+1].id)===0) return [order[i],order[i+1]];
+  }
+  return null;
+}
+function rankingIsResolved(){
+  const order=buildProvisionalOrder();
+  for(let i=0;i<order.length-1;i++){
+    if(relation(order[i].id,order[i+1].id)===0) return false;
+  }
+  return true;
+}
 async function choose(id){
-  if(!currentPair || !currentPair.some(s=>s.id===id)) return;
-  const [a,b]=currentPair; wins[id]=(wins[id]||0)+1; matches.push([a.id,b.id,id]);
-  if(matches.length>=12){ await finish(); return; }
-  nextPair();
+  if(!currentPair || !currentPair.some(s=>s.id===id) || finishPromise) return;
+  const [a,b]=currentPair;
+  if(relation(a.id,b.id)!==0) return;
+  wins[id]=(wins[id]||0)+1;
+  matches.push([a.id,b.id,id]);
+  currentPair=null;
   await saveActiveGame();
+  if(rankingIsResolved()){
+    finishPromise=finish();
+    await finishPromise;
+    finishPromise=null;
+    return;
+  }
+  nextPair();
 }
 function nextPair(){
-  let pool=[...songs].sort(()=>Math.random()-.5);
-  let a=pool[0], b=pool.find(x=>x.id!==a.id && !matches.some(m=>(m[0]===a.id&&m[1]===x.id)||(m[0]===x.id&&m[1]===a.id)));
-  if(!b)b=pool.find(x=>x.id!==a.id);
-  currentPair=[a,b];
-  renderCurrentPair();
+  const boundary=getUnresolvedBoundary();
+  if(boundary){
+    currentPair=boundary;
+    renderCurrentPair();
+    return;
+  }
+  // Fallback: if the provisional order cannot find an unresolved adjacent
+  // boundary, search every incomparable pair. This should only be needed
+  // while a graph is being rebuilt after an old saved game is restored.
+  const candidates=[];
+  for(let i=0;i<songs.length;i++){
+    for(let j=i+1;j<songs.length;j++){
+      if(relation(songs[i].id,songs[j].id)===0) candidates.push([songs[i],songs[j]]);
+    }
+  }
+  if(candidates.length){
+    currentPair=candidates[Math.floor(Math.random()*candidates.length)];
+    renderCurrentPair();
+    return;
+  }
+  if(hasCycle()){
+    // A user's preferences can theoretically form a cycle (A>B>C>A).
+    // In that case there is no valid transitive order to prove. Do not
+    // silently invent a ranking; keep the game alive and ask for a new
+    // comparison only after the cycle is broken by an explicit matchup.
+    const pool=[...songs].sort(()=>Math.random()-.5);
+    for(let i=0;i<pool.length;i++) for(let j=i+1;j<pool.length;j++) {
+      if(directResult(pool[i].id,pool[j].id)!==null && relation(pool[i].id,pool[j].id)===0){
+        currentPair=[pool[i],pool[j]];
+        renderCurrentPair();
+        return;
+      }
+    }
+  }
+  if(rankingIsResolved()){
+    finishPromise=finish();
+    finishPromise.finally(()=>{finishPromise=null});
+  }
 }
 function renderCurrentPair(){
   if(!currentPair)return;
@@ -972,22 +1118,18 @@ function renderCurrentPair(){
 }
 function openCurrentRanking(){
   if(!songs.length)return;
-  const ranked=[...songs].sort((a,b)=>{
-    const wd=(wins[b.id]||0)-(wins[a.id]||0); if(wd)return wd;
-    const ca=matches.filter(m=>m[0]===a.id||m[1]===a.id).length;
-    const cb=matches.filter(m=>m[0]===b.id||m[1]===b.id).length;
-    return cb-ca;
-  });
-  document.getElementById('currentRankList').innerHTML=ranked.map((s,i)=>`<div class="modal-rank-row"><div class="modal-rank-num">${i+1}</div><div><div class="modal-rank-song">${s.title}</div><div class="modal-rank-album">${s.album}</div></div></div>`).join('');
+  const ranked=buildProvisionalOrder();
+  document.getElementById('currentRankList').innerHTML=ranked.map((s,i)=>{
+    const certain=i===ranked.length-1 || relation(ranked[i].id,ranked[i+1].id)!==0;
+    return `<div class="modal-rank-row"><div class="modal-rank-num">${i+1}</div><div><div class="modal-rank-song">${escapeHtml(s.title)}</div><div class="modal-rank-album">${escapeHtml(s.album)}</div></div><div class="badge">${certain?'ordem definida':'posição provisória'}</div></div>`;
+  }).join('');
   document.getElementById('rankModal').classList.add('open');
 }
 function closeCurrentRanking(){document.getElementById('rankModal').classList.remove('open')}
 
 async function finish(){
-  const ranked=[...songs].sort((a,b)=>{
-    const wd=(wins[b.id]||0)-(wins[a.id]||0); if(wd)return wd;
-    return b.id-a.id;
-  });
+  if(!rankingIsResolved()) return;
+  const ranked=buildProvisionalOrder();
   const ranking=ranked.map(s=>({...s,wins:wins[s.id]||0}));
   const record={
     id:'ranking-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
@@ -1011,7 +1153,7 @@ async function finish(){
     <div class="fact"><b>⚔️ Duelo marcante</b><span>Você poderá descobrir quais confrontos tiveram maior peso na definição do ranking.</span></div>`;
   go('results');
 }
-const CATALOG_EXPECTED={j5:111,jacksons:55,motown:48,adult:80,post:15,rarities:47};
+const CATALOG_EXPECTED={j5:110,jacksons:55,motown:48,adult:80,post:15,rarities:47};
 const catalogActual={};
 masterSongs.forEach(s=>{ const c=catalogs.find(c=>c.title===s.catalog); if(c) catalogActual[c.id]=(catalogActual[c.id]||0)+1; });
 if(Object.keys(CATALOG_EXPECTED).some(k=>catalogActual[k]!==CATALOG_EXPECTED[k])) console.warn('Catálogo divergente:',catalogActual);
