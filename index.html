@@ -65,9 +65,18 @@ h2{font-size:34px;margin:0 0 10px;letter-spacing:-.03em}
 .no-rank{margin-top:20px;color:#727887;font-size:12px}
 .results{max-width:900px;margin:auto}
 .rank-list{margin-top:24px;border:1px solid var(--line);border-radius:20px;overflow:hidden}
-.rank-row{display:grid;grid-template-columns:58px 1fr auto;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px solid var(--line);background:#0e1117}
-.rank-row:last-child{border-bottom:0}.rank-num{font-size:22px;font-weight:900;color:#7d8491}.rank-row:nth-child(1) .rank-num{color:#f3cc63}.rank-row:nth-child(2) .rank-num{color:#c7ced8}.rank-row:nth-child(3) .rank-num{color:#c48d62}
-.rank-song{font-weight:800}.rank-album{font-size:12px;color:var(--muted);margin-top:3px}.badge{font-size:12px;color:var(--muted)}
+.rank-row{display:grid;grid-template-columns:72px 1fr auto;align-items:center;gap:16px;padding:16px 20px;border-bottom:1px solid var(--line);background:#0e1117;min-height:78px;transition:.18s}
+.rank-row:last-child{border-bottom:0}
+.rank-row:hover{background:#12161e}
+.rank-row.rank-winner{position:relative;padding:24px 22px;min-height:122px;background:radial-gradient(circle at 12% 50%,#6b501722 0,#17130d 38%,#0f1117 78%);border-color:#5d4a22;box-shadow:inset 0 0 45px #d9b35a0b,0 8px 30px #0005}
+.rank-row.rank-winner:before{content:"";position:absolute;inset:0;border:1px solid #d9b35a44;border-radius:0;pointer-events:none}
+.rank-num{font-size:22px;font-weight:900;color:#7d8491;display:flex;align-items:center;gap:8px}
+.rank-winner .rank-num{font-size:30px;color:#f3cc63}
+.rank-row:nth-child(2) .rank-num{color:#c7ced8}.rank-row:nth-child(3) .rank-num{color:#c48d62}
+.rank-medal{font-size:28px;filter:drop-shadow(0 3px 8px #0008)}
+.rank-winner .rank-song{font-size:24px}.rank-song{font-weight:850;line-height:1.15}.rank-album{font-size:12px;color:var(--muted);margin-top:5px}
+.rank-stats{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}.rank-stat{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border:1px solid #303644;background:#0b0e13;border-radius:999px;font-size:11px;color:#b8bec9;white-space:nowrap}.rank-stat strong{color:#eef0f4;font-weight:800}.rank-stat.win strong{color:#7ee2a8}.rank-stat.loss strong{color:#ff9aa3}.rank-side{text-align:right;color:#aab0bc;font-size:11px}.rank-side-label{display:block;color:#697181;margin-top:4px}
+.badge{font-size:12px;color:var(--muted)}
 .fun{margin-top:24px}.fun-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.fact{padding:18px;border:1px solid var(--line);background:var(--panel);border-radius:18px}.fact b{display:block;margin-bottom:7px}.fact span{color:#c2c7d0;line-height:1.5;font-size:14px}
 @media(max-width:800px){.grid{grid-template-columns:1fr 1fr}.album-grid{grid-template-columns:repeat(2,1fr)}.duel{grid-template-columns:1fr}.song{min-height:280px}.fun-grid{grid-template-columns:1fr}}
 @media(max-width:520px){.app{padding:20px 14px 40px}.grid{grid-template-columns:1fr}.card img{height:270px}.topbar{margin-bottom:15px}.section-head{align-items:start;flex-direction:column}.duel{gap:12px}.song{min-height:250px}.song img{width:140px;height:140px}.song-title{font-size:24px}}
@@ -345,7 +354,7 @@ body:has(.home-screen.active) .logo {
     <div class="auth-gate-status" id="authGateStatus">Verificando sua sessão…</div>
   </div>
 </div>
-<div class="app-version" id="appVersion">MJ SONG RANKER · v1.2.1 · CATÁLOGO 356</div>
+<div class="app-version" id="appVersion">MJ SONG RANKER · v1.4.0 · CATÁLOGO 356</div>
 <div class="app" id="mainApp">
   <div class="topbar" style="display:none" id="topbar">
     <div class="logo"><img src="assets/image-003.png" alt="MJ Song Ranker"></div>
@@ -672,7 +681,7 @@ const masterSongs = [{"title":"Zip-A-Dee-Doo-Dah","album":"Diana Ross Presents t
 // =========================
 // Persistência local (IndexedDB)
 // =========================
-const APP_VERSION = '1.2.1';
+const APP_VERSION = '1.4.0';
 const CATALOG_VERSION = '356';
 const DB_NAME = 'MJSongRankerDB';
 const DB_VERSION = 1;
@@ -822,11 +831,40 @@ document.addEventListener('click',e=>{
   const view=e.target.closest('.saved-view-btn');
   if(view){e.preventDefault();e.stopPropagation();viewSavedRanking(view.dataset.rankingId);}
 });
+function getSongStats(songId){
+  let confrontos=0, winsCount=0, losses=0;
+  for(const [a,b,w] of matches){
+    if(a!==songId && b!==songId) continue;
+    confrontos++;
+    if(w===songId) winsCount++; else losses++;
+  }
+  return {confrontos,wins:winsCount,losses};
+}
+function medalForPosition(i){
+  return i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+}
+function renderFinalRanking(ranking, statsById={}){
+  return ranking.map((s,i)=>{
+    const st=statsById[s.id] || {confrontos:s.confrontos ?? 0,wins:s.wins ?? 0,losses:s.losses ?? 0};
+    const medal=medalForPosition(i);
+    const winner=i===0;
+    return `<div class=\"rank-row ${winner?'rank-winner':''}\">`+
+      `<div class=\"rank-num\">${medal?`<span class=\"rank-medal\">${medal}</span>`:''}<span>${i+1}</span></div>`+
+      `<div><div class=\"rank-song\">${escapeHtml(s.title)}</div><div class=\"rank-album\">${escapeHtml(s.album)}</div>`+
+      `<div class=\"rank-stats\">`+
+      `<span class=\"rank-stat\">⚔️ <strong>${st.confrontos}</strong> confrontos</span>`+
+      `<span class=\"rank-stat win\">✓ <strong>${st.wins}</strong> vitórias</span>`+
+      `<span class=\"rank-stat loss\">✕ <strong>${st.losses}</strong> derrotas</span>`+
+      `</div></div>`+
+      (winner?`<div class=\"rank-side\">👑<span class=\"rank-side-label\">GRANDE VENCEDOR</span></div>`:'')+
+      `</div>`;
+  }).join('');
+}
 async function viewSavedRanking(id){
   const r=await DB.get(DB_STORES.rankings,id); if(!r)return;
   closeSaveModal();
   document.getElementById('resultMeta').textContent=`${r.songCount} músicas • ${r.matchCount} confrontos • ranking salvo`;
-  document.getElementById('rankList').innerHTML=r.ranking.map((s,i)=>`<div class="rank-row"><div class="rank-num">${i+1}</div><div><div class="rank-song">${escapeHtml(s.title)}</div><div class="rank-album">${escapeHtml(s.album)}</div></div><div class="badge">${s.wins||0} vitória${s.wins===1?'':'s'}</div></div>`).join('');
+  document.getElementById('rankList').innerHTML=renderFinalRanking(r.ranking);
   document.getElementById('facts').innerHTML='<div class="fact"><b>💾 Ranking salvo</b><span>Este resultado foi recuperado do armazenamento local do navegador.</span></div>';
   go('results');
 }
@@ -1130,7 +1168,7 @@ function closeCurrentRanking(){document.getElementById('rankModal').classList.re
 async function finish(){
   if(!rankingIsResolved()) return;
   const ranked=buildProvisionalOrder();
-  const ranking=ranked.map(s=>({...s,wins:wins[s.id]||0}));
+  const ranking=ranked.map(s=>{const st=getSongStats(s.id); return {...s,wins:st.wins,losses:st.losses,confrontos:st.confrontos};});
   const record={
     id:'ranking-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
     title:'Michael Jackson Song Ranker',
@@ -1145,7 +1183,7 @@ async function finish(){
   await DB.delete(DB_STORES.active,'activeGame').catch(()=>{});
   if(window.MJCloud?.user) await window.MJCloud.deleteGame().catch(()=>{});
   document.getElementById('resultMeta').textContent=`${songs.length} músicas • ${matches.length} confrontos`;
-  document.getElementById('rankList').innerHTML=ranking.map((s,i)=>`<div class="rank-row"><div class="rank-num">${i+1}</div><div><div class="rank-song">${escapeHtml(s.title)}</div><div class="rank-album">${escapeHtml(s.album)}</div></div><div class="badge">${s.wins} vitória${s.wins===1?'':'s'}</div></div>`).join('');
+  document.getElementById('rankList').innerHTML=renderFinalRanking(ranking);
   document.getElementById('facts').innerHTML=`
     <div class="fact"><b>💿 Álbum em destaque</b><span>O resultado pode revelar qual álbum dominou seu ranking.</span></div>
     <div class="fact"><b>🕰️ Sua era</b><span>Com uma partida maior, o jogo identifica qual fase aparece com mais força no seu Top 10.</span></div>
