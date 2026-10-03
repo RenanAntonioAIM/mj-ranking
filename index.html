@@ -1368,7 +1368,7 @@ async function findApplePreview(song){
       // Fallback para as demais músicas: busca textual com validação de
       // artista e título, incluindo o álbum para reduzir ambiguidades.
       const term=encodeURIComponent(previewSearchTerm(song));
-      const url=\`https://itunes.apple.com/search?term=\${term}&country=br&media=music&entity=song&limit=25\`;
+      const url=`https://itunes.apple.com/search?term=${term}&country=br&media=music&entity=song&limit=25`;
       const response=await fetch(url);
       if(!response.ok) return null;
       const data=await response.json();
