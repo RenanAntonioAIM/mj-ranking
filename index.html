@@ -1065,6 +1065,7 @@ function startGame(){
   saveActiveGame();
 }
 let activeGameTitle='';
+let pendingFinalRecord=null;
 let finishPromise=null;
 function hasPath(fromId,toId){
   if(fromId===toId) return true;
@@ -1378,20 +1379,12 @@ async function finish(){
   if(!rankingIsResolved()) return;
   const ranked=buildProvisionalOrder();
   const ranking=ranked.map(s=>{const st=getSongStats(s.id); return {...s,wins:st.wins,losses:st.losses,confrontos:st.confrontos};});
-  const record={
+  pendingFinalRecord={
     id:'ranking-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
-    title:'Michael Jackson Song Ranker',
+    title:'',
     createdAt:Date.now(), songCount:songs.length, matchCount:matches.length,
     selectedCatalogs:[...selectedCatalogs], selectedAlbums:[...selectedAlbums], ranking
   };
-  await DB.put(DB_STORES.rankings,record).catch(err=>console.warn('Falha ao salvar ranking:',err));
-  if(window.MJCloud?.user){
-    const ok=await window.MJCloud.saveRanking(record);
-    if(!ok) console.warn('Ranking não sincronizado com a nuvem.');
-  }
-  await DB.delete(DB_STORES.active,'activeGame').catch(()=>{});
-  if(window.MJCloud?.user) await window.MJCloud.deleteGame().catch(()=>{});
-  activeGameTitle='';
   document.getElementById('resultMeta').textContent=`${songs.length} músicas • ${matches.length} confrontos`;
   document.getElementById('rankList').innerHTML=renderFinalRanking(ranking);
   document.getElementById('facts').innerHTML=`
@@ -1400,6 +1393,42 @@ async function finish(){
     <div class="fact"><b>🔥 Uma surpresa</b><span>O sistema procura posições inesperadas para destacar escolhas que fugiram do padrão.</span></div>
     <div class="fact"><b>⚔️ Duelo marcante</b><span>Você poderá descobrir quais confrontos tiveram maior peso na definição do ranking.</span></div>`;
   go('results');
+  openFinalRankingSaveModal();
+}
+function openFinalRankingSaveModal(){
+  if(!pendingFinalRecord) return;
+  const body=document.getElementById('saveModalBody');
+  document.getElementById('saveModalTitle').textContent='Salvar ranking final';
+  body.innerHTML=`
+    <div class="save-note">Seu ranking terminou. Dê um nome para salvar este resultado em <b>Meus rankings</b>.</div>
+    <div class="save-form">
+      <label for="finalRankingName">Nome do ranking</label>
+      <input id="finalRankingName" maxlength="60" autocomplete="off" placeholder="Ex.: Meu ranking definitivo do Michael" value="">
+      <div class="actions" style="margin-top:4px;justify-content:flex-end">
+        <button class="primary" style="margin:0" onclick="confirmFinalRankingSave()">Salvar ranking</button>
+      </div>
+    </div>`;
+  document.getElementById('saveModal').classList.add('open');
+  setTimeout(()=>document.getElementById('finalRankingName')?.focus(),50);
+}
+async function confirmFinalRankingSave(){
+  if(!pendingFinalRecord) return;
+  const input=document.getElementById('finalRankingName');
+  const name=(input?.value||'').trim();
+  if(!name){alert('Digite um nome para o ranking.'); input?.focus(); return;}
+  pendingFinalRecord.title=name;
+  const record=pendingFinalRecord;
+  await DB.put(DB_STORES.rankings,record).catch(err=>console.warn('Falha ao salvar ranking:',err));
+  if(window.MJCloud?.user){
+    const ok=await window.MJCloud.saveRanking(record);
+    if(!ok) console.warn('Ranking não sincronizado com a nuvem.');
+  }
+  await DB.delete(DB_STORES.active,'activeGame').catch(()=>{});
+  if(window.MJCloud?.user) await window.MJCloud.deleteGame().catch(()=>{});
+  pendingFinalRecord=null;
+  activeGameTitle='';
+  closeSaveModal();
+  toast('Ranking salvo em Meus rankings.');
 }
 const CATALOG_EXPECTED={j5:110,jacksons:55,motown:48,adult:80,post:15,rarities:47};
 const catalogActual={};
