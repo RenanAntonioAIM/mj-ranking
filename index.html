@@ -1326,7 +1326,7 @@ async function togglePreview(id,event){
   audio.preload='none'; previewAudio=audio; previewSongId=id;
   audio.onended=()=>stopPreview();
   audio.onerror=()=>{stopPreview();btn.classList.add('unavailable');btn.innerHTML='<span class="preview-unavailable">×</span>';};
-  btn.disabled=false; btn.classList.add('playing'); btn.innerHTML='<svg class="preview-icon preview-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="5" width="3.5" height="14" rx="1"/><rect x="13.5" y="5" width="3.5" height="14" rx="1"/></svg>';
+  btn.disabled=false; btn.classList.add('playing'); btn.innerHTML='<img class="preview-icon" src="assets/pause-icon.svg" alt="">';
   try{await audio.play();}catch(err){stopPreview();btn.classList.add('unavailable');btn.innerHTML='<span class="preview-unavailable">×</span>';}
 }
 function renderCurrentPair(){
