@@ -884,6 +884,39 @@ function renderFinalRanking(ranking, statsById={}){
       `</div>`;
   }).join('');
 }
+function renderDynamicFacts(ranking, matchList){
+  if(!ranking || !ranking.length) return '';
+  const topCount=Math.min(10,ranking.length);
+  const topSlice=ranking.slice(0,topCount);
+  const albumCounts=new Map(), catalogCounts=new Map();
+  topSlice.forEach(s=>{
+    albumCounts.set(s.album,(albumCounts.get(s.album)||0)+1);
+    catalogCounts.set(s.catalog,(catalogCounts.get(s.catalog)||0)+1);
+  });
+  const topAlbum=[...albumCounts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0];
+  const topCatalog=[...catalogCounts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0];
+  const topSong=ranking[0];
+  const mostWins=[...ranking].sort((a,b)=>(b.wins||0)-(a.wins||0)||ranking.indexOf(a)-ranking.indexOf(b))[0];
+  const positionById=new Map(ranking.map((s,i)=>[s.id,i]));
+  const byId=new Map(ranking.map(s=>[s.id,s]));
+  let decisive=null;
+  (matchList||[]).forEach(([a,b,w])=>{
+    if(!positionById.has(a)||!positionById.has(b)||!positionById.has(w)) return;
+    const gap=Math.abs(positionById.get(a)-positionById.get(b));
+    if(!decisive||gap>decisive.gap) decisive={winner:w,loser:w===a?b:a,gap};
+  });
+  const facts=[
+    ['👑','Chegou ao topo',`<strong>${escapeHtml(topSong.title)}</strong> terminou em #1, no álbum ${escapeHtml(topSong.album)}.`],
+    ['💿',`Álbum mais presente no Top ${topCount}`,`<strong>${escapeHtml(topAlbum[0])}</strong> colocou ${topAlbum[1]} ${topAlbum[1]===1?'música':'músicas'} entre as ${topCount} primeiras.`],
+    ['🎤','Era mais presente',`<strong>${escapeHtml(topCatalog[0])}</strong> teve ${topCatalog[1]} ${topCatalog[1]===1?'música':'músicas'} no Top ${topCount}.`],
+    ['🔥','Mais vitórias',`<strong>${escapeHtml(mostWins.title)}</strong> venceu ${mostWins.wins||0} ${mostWins.wins===1?'confronto':'confrontos'} durante a partida.`]
+  ];
+  if(decisive){
+    const winner=byId.get(decisive.winner), loser=byId.get(decisive.loser);
+    facts[3]=['⚔️','Duelo que mais separou posições',`<strong>${escapeHtml(winner.title)}</strong> venceu <strong>${escapeHtml(loser.title)}</strong> e terminou ${decisive.gap} posições à frente dele.`];
+  }
+  return facts.map(f=>`<div class="fact"><b>${f[0]} ${f[1]}</b><span>${f[2]}</span></div>`).join('');
+}
 async function viewSavedRanking(id){
   const r=await DB.get(DB_STORES.rankings,id); if(!r)return;
   closeSaveModal();
@@ -1393,15 +1426,12 @@ async function finish(){
     id:'ranking-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
     title:'',
     createdAt:Date.now(), songCount:songs.length, matchCount:matches.length,
-    selectedCatalogs:[...selectedCatalogs], selectedAlbums:[...selectedAlbums], ranking
+    selectedCatalogs:[...selectedCatalogs], selectedAlbums:[...selectedAlbums],
+    ranking, matches:matches.slice()
   };
   document.getElementById('resultMeta').textContent=`${songs.length} músicas • ${matches.length} confrontos`;
   document.getElementById('rankList').innerHTML=renderFinalRanking(ranking);
-  document.getElementById('facts').innerHTML=`
-    <div class="fact"><b>💿 Álbum em destaque</b><span>O resultado pode revelar qual álbum dominou seu ranking.</span></div>
-    <div class="fact"><b>🕰️ Sua era</b><span>Com uma partida maior, o jogo identifica qual fase aparece com mais força no seu Top 10.</span></div>
-    <div class="fact"><b>🔥 Uma surpresa</b><span>O sistema procura posições inesperadas para destacar escolhas que fugiram do padrão.</span></div>
-    <div class="fact"><b>⚔️ Duelo marcante</b><span>Você poderá descobrir quais confrontos tiveram maior peso na definição do ranking.</span></div>`;
+  document.getElementById('facts').innerHTML=renderDynamicFacts(ranking,matches);
   go('results');
   openFinalRankingSaveModal();
 }
