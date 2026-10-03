@@ -1343,8 +1343,32 @@ async function findApplePreview(song){
   if(previewCache.has(key)) return previewCache.get(key);
   const promise=(async()=>{
     try{
+      // Para faixas que já conhecemos no catálogo da Apple, usamos lookup
+      // por trackId em vez de busca textual. Isso evita falsos positivos
+      // quando a API encontra outra gravação com o mesmo/similar título.
+      const appleTrackIds={
+        'Hold My Hand':1631592484,
+        'Best of Joy':1631592680,
+        '(I Can\'t Make It) Another Day':1631592683,
+        'Behind the Mask':1631592685
+      };
+      const knownTrackId=appleTrackIds[song.title];
+      if(knownTrackId){
+        const lookupUrl=\`https://itunes.apple.com/lookup?id=\${knownTrackId}&entity=song&country=br\`;
+        const lookupResponse=await fetch(lookupUrl);
+        if(lookupResponse.ok){
+          const lookupData=await lookupResponse.json();
+          const direct=Array.isArray(lookupData.results)
+            ? lookupData.results.find(r=>r.previewUrl && String(r.trackId)===String(knownTrackId))
+            : null;
+          if(direct) return direct;
+        }
+      }
+
+      // Fallback para as demais músicas: busca textual com validação de
+      // artista e título, incluindo o álbum para reduzir ambiguidades.
       const term=encodeURIComponent(previewSearchTerm(song));
-      const url=`https://itunes.apple.com/search?term=${term}&country=br&media=music&entity=song&limit=25`;
+      const url=\`https://itunes.apple.com/search?term=\${term}&country=br&media=music&entity=song&limit=25\`;
       const response=await fetch(url);
       if(!response.ok) return null;
       const data=await response.json();
