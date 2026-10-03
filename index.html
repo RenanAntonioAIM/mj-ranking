@@ -59,7 +59,7 @@ h2{font-size:34px;margin:0 0 10px;letter-spacing:-.03em}
 .question{color:var(--muted);letter-spacing:.18em;text-transform:uppercase;font-size:12px;font-weight:800;margin-bottom:22px}
 .ranking-progress{width:min(900px,100%);margin:0 0 22px;padding:14px 16px;border:1px solid #383f4d;border-radius:16px;background:rgba(13,16,22,.78);box-shadow:0 12px 32px #0004;text-align:left}.ranking-progress-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:9px}.ranking-progress-title{color:#d7dbe3;font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase}.ranking-progress-value{color:var(--gold);font-size:13px;font-weight:900;white-space:nowrap}.ranking-progress-track{height:8px;overflow:hidden;border-radius:999px;background:#252b36;box-shadow:inset 0 1px 2px #0008}.ranking-progress-fill{width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#a87e2d,#f0cd73);box-shadow:0 0 16px #d9b35a77;transition:width .28s ease}.ranking-progress-detail{margin-top:8px;color:var(--muted);font-size:12px}
 .duel{display:grid;grid-template-columns:1fr 1fr;gap:18px;width:min(900px,100%)}
-.song{border:1px solid var(--line);background:linear-gradient(180deg,#151923,#0d1016);color:var(--text);border-radius:26px;padding:28px 20px;cursor:pointer;min-height:350px;transition:.18s;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}\n.song{position:relative}\n.song-preview{margin-top:14px;border:1px solid #4a5262;background:#0a0d13;color:#d9b35a;border-radius:999px;padding:8px 13px;font-size:12px;font-weight:800;cursor:pointer;transition:.18s;position:relative;z-index:2}.song-preview:hover{border-color:#d9b35a;background:#141923}.song-preview.playing{background:#d9b35a;color:#0a0b0f;border-color:#d9b35a}.song-preview.unavailable{color:#737b8a;border-color:#303542;cursor:default}.song-preview:disabled{opacity:.65;cursor:wait}.song-apple-link{display:block;margin-top:7px;color:#777f8e;font-size:10px;text-decoration:none;position:relative;z-index:2}.song-apple-link:hover{color:#d9b35a}
+.song{border:1px solid var(--line);background:linear-gradient(180deg,#151923,#0d1016);color:var(--text);border-radius:26px;padding:28px 20px;cursor:pointer;min-height:350px;transition:.18s;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}\n.song{position:relative}\n.song-preview{margin-top:14px;width:44px;height:44px;padding:0;border:1px solid #4a5262;background:#0a0d13;color:#d9b35a;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:.18s;position:relative;z-index:2;box-shadow:0 6px 18px #0005}.song-preview:hover{border-color:#d9b35a;background:#141923;transform:translateY(-2px)}.song-preview.playing{background:#d9b35a;color:#0a0b0f;border-color:#d9b35a}.song-preview.unavailable{color:#737b8a;border-color:#303542;cursor:default}.song-preview:disabled{opacity:.65;cursor:wait;transform:none}.preview-icon{width:18px;height:18px;fill:currentColor}.preview-spinner{width:15px;height:15px;border:2px solid #777f8a;border-top-color:#d9b35a;border-radius:50%;animation:previewSpin .7s linear infinite}.preview-unavailable{font-size:19px;line-height:1}.song-apple-link{display:block;margin-top:7px;color:#777f8e;font-size:10px;text-decoration:none;position:relative;z-index:2}.song-apple-link:hover{color:#d9b35a}@keyframes previewSpin{to{transform:rotate(360deg)}}
 .song:hover{border-color:#737b8c;transform:translateY(-4px)}
 .song img{width:190px;height:190px;object-fit:cover;border-radius:16px;box-shadow:0 18px 40px #0008;margin-bottom:22px}
 .song-title{font-size:28px;font-weight:850;letter-spacing:-.035em;color:#f7f7f8;line-height:1.12;text-shadow:0 2px 14px #000}.song-album{color:#b8bfca;margin-top:8px;font-size:14px}
@@ -80,7 +80,7 @@ h2{font-size:34px;margin:0 0 10px;letter-spacing:-.03em}
 .badge{font-size:12px;color:var(--muted)}
 .fun{margin-top:24px}.fun-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.fact{padding:18px;border:1px solid var(--line);background:var(--panel);border-radius:18px}.fact b{display:block;margin-bottom:7px}.fact span{color:#c2c7d0;line-height:1.5;font-size:14px}
 @media(max-width:800px){.grid{grid-template-columns:1fr 1fr}.album-grid{grid-template-columns:repeat(2,1fr)}.duel{grid-template-columns:1fr}.song{min-height:280px}.fun-grid{grid-template-columns:1fr}}
-@media(max-width:520px){.app{padding:20px 14px 40px}.grid{grid-template-columns:1fr}.card{min-height:230px;border-radius:17px}.card img{height:185px}.card-info{left:14px;right:14px;bottom:13px}.card-title{font-size:19px}.card-meta{font-size:12px}.topbar{margin-bottom:15px}.section-head{align-items:start;flex-direction:column}.duel{gap:10px}.song{min-height:220px;padding:18px 14px;border-radius:20px}.song img{width:118px;height:118px;margin-bottom:14px;border-radius:13px}.song-title{font-size:20px}.song-album{font-size:12px;margin-top:6px}.song-preview{margin-top:10px;padding:7px 11px;font-size:11px}.song-apple-link{font-size:9px}.ranking-progress{margin-bottom:14px;padding:11px 13px}.ranking-progress-detail{font-size:11px}}
+@media(max-width:520px){.app{padding:20px 14px 40px}.grid{grid-template-columns:1fr}.card{min-height:230px;border-radius:17px}.card img{height:185px}.card-info{left:14px;right:14px;bottom:13px}.card-title{font-size:19px}.card-meta{font-size:12px}.topbar{margin-bottom:15px}.section-head{align-items:start;flex-direction:column}.duel{gap:10px}.song{min-height:220px;padding:18px 14px;border-radius:20px}.song img{width:118px;height:118px;margin-bottom:14px;border-radius:13px}.song-title{font-size:20px}.song-album{font-size:12px;margin-top:6px}.song-preview{margin-top:10px;width:40px;height:40px}.song-apple-link{font-size:9px}.ranking-progress{margin-bottom:14px;padding:11px 13px}.ranking-progress-detail{font-size:11px}}
 
 .local-art{
   width:100%;height:250px;display:flex;align-items:flex-end;justify-content:center;
@@ -1244,10 +1244,32 @@ const previewCache = new Map();
 let previewAudio = null;
 let previewSongId = null;
 
-function previewArtistFor(song){
-  if(song.catalog==='Jackson 5') return 'Jackson 5';
-  if(song.catalog==='The Jacksons') return 'The Jacksons';
-  return 'Michael Jackson';
+function previewArtistsFor(song){
+  const collaborationArtists={
+    'We Are the World':['U.S.A. For Africa'],
+    'All in Your Name':['Barry Gibb','Michael Jackson'],
+    'There Must Be More to Life Than This':['Freddie Mercury','Michael Jackson'],
+    'What More Can I Give':['Michael Jackson'],
+    'Why':['3T'],
+    'I Need You':['3T'],
+    'Tell Me I’m Not Dreaming (Too Good to Be True)':['Jermaine Jackson'],
+    'Whatzupwitu':['Eddie Murphy'],
+    'Eaten Alive':['Diana Ross'],
+    'Say Say Say':['Paul McCartney','Michael Jackson'],
+    'The Man':['Paul McCartney','Michael Jackson']
+  };
+  if(collaborationArtists[song.title]) return collaborationArtists[song.title];
+  if(song.catalog==='Jackson 5') return ['Jackson 5','The Jackson 5'];
+  if(song.catalog==='The Jacksons') return ['The Jacksons'];
+  return ['Michael Jackson'];
+}
+function previewSearchTerm(song){
+  return `${song.title} ${previewArtistsFor(song).join(' ')}`;
+}
+function artistMatches(result,song){
+  const artist=normalizePreviewText(result.artistName);
+  const expected=previewArtistsFor(song).map(normalizePreviewText);
+  return expected.some(name=>artist===name || artist.includes(name));
 }
 function normalizePreviewText(value){
   return String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
@@ -1257,15 +1279,15 @@ async function findApplePreview(song){
   if(previewCache.has(key)) return previewCache.get(key);
   const promise=(async()=>{
     try{
-      const term=encodeURIComponent(`${song.title} ${previewArtistFor(song)}`);
+      const term=encodeURIComponent(previewSearchTerm(song));
       const url=`https://itunes.apple.com/search?term=${term}&country=br&media=music&entity=song&limit=10`;
       const response=await fetch(url);
       if(!response.ok) return null;
       const data=await response.json();
       const target=normalizePreviewText(song.title);
       const results=Array.isArray(data.results)?data.results:[];
-      return results.find(r=>r.previewUrl && normalizePreviewText(r.trackName||r.trackCensoredName)===target)
-        || results.find(r=>r.previewUrl && normalizePreviewText(r.trackName||r.trackCensoredName).includes(target))
+      const artistResults=results.filter(r=>r.previewUrl && artistMatches(r,song));
+      return artistResults.find(r=>normalizePreviewText(r.trackName||r.trackCensoredName)===target)
         || null;
     }catch(err){ console.warn('Falha ao buscar preview da Apple:',err); return null; }
   })();
@@ -1276,7 +1298,7 @@ function stopPreview(){
   if(previewAudio){ previewAudio.pause(); previewAudio.currentTime=0; }
   if(previewSongId!==null){
     const btn=document.querySelector(`.song-preview[data-song-id="${CSS.escape(String(previewSongId))}"]`);
-    if(btn){btn.classList.remove('playing');btn.textContent='▶ Ouvir trecho';}
+    if(btn){btn.classList.remove('playing');btn.innerHTML='<svg class="preview-icon preview-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6c0 .8.9 1.3 1.6.9l10-6.8a1.1 1.1 0 0 0 0-1.8l-10-6.8C8.9 3.9 8 4.4 8 5.2Z"/></svg>';}
   }
   previewAudio=null; previewSongId=null;
 }
@@ -1288,17 +1310,17 @@ async function togglePreview(id,event){
   stopPreview();
   const btn=document.querySelector(`.song-preview[data-song-id="${CSS.escape(String(id))}"]`);
   if(!btn)return;
-  btn.disabled=true; btn.textContent='Buscando…';
+  btn.disabled=true; btn.innerHTML='<span class="preview-spinner" aria-hidden="true"></span>';
   const result=await findApplePreview(song);
-  if(!result?.previewUrl){btn.disabled=false;btn.classList.add('unavailable');btn.textContent='Trecho indisponível';return;}
+  if(!result?.previewUrl){btn.disabled=false;btn.classList.add('unavailable');btn.innerHTML='<span class="preview-unavailable">×</span>';return;}
   const audio=new Audio(result.previewUrl);
   audio.preload='none'; previewAudio=audio; previewSongId=id;
   audio.onended=()=>stopPreview();
-  audio.onerror=()=>{stopPreview();btn.classList.add('unavailable');btn.textContent='Trecho indisponível';};
-  btn.disabled=false; btn.classList.add('playing'); btn.textContent='⏸ Pausar trecho';
+  audio.onerror=()=>{stopPreview();btn.classList.add('unavailable');btn.innerHTML='<span class="preview-unavailable">×</span>';};
+  btn.disabled=false; btn.classList.add('playing'); btn.innerHTML='<svg class="preview-icon preview-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="5" width="3.5" height="14" rx="1"/><rect x="13.5" y="5" width="3.5" height="14" rx="1"/></svg>';
   const appleLink=document.querySelector(`.song-apple-link[data-apple-link-id="${CSS.escape(String(id))}"]`);
   if(appleLink && result.trackViewUrl){ appleLink.href=result.trackViewUrl; appleLink.style.display='block'; }
-  try{await audio.play();}catch(err){stopPreview();btn.classList.add('unavailable');btn.textContent='Trecho indisponível';}
+  try{await audio.play();}catch(err){stopPreview();btn.classList.add('unavailable');btn.innerHTML='<span class="preview-unavailable">×</span>';}
 }
 function renderCurrentPair(){
   if(!currentPair)return;
@@ -1309,7 +1331,9 @@ function renderCurrentPair(){
       ${art?`<img class="real-img" src="${art}" alt="${escapeHtml(s.album)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:''}
       <div class="local-art" style="display:${art?'none':'flex'};width:190px;height:190px;border-radius:16px;flex:none;--a:#272b3c;--b:#090b10"><div class="art-label">MJ<br>SONG</div></div>
       <div class="song-title">${escapeHtml(s.title)}</div><div class="song-album">${escapeHtml(s.album)}</div>
-      <button type="button" class="song-preview" data-song-id="${s.id}" onclick="togglePreview(${s.id},event)">▶ Ouvir trecho</button>
+      <button type="button" class="song-preview" data-song-id="${s.id}" aria-label="Ouvir trecho" title="Ouvir trecho" onclick="togglePreview(${s.id},event)">
+        <svg class="preview-icon preview-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6c0 .8.9 1.3 1.6.9l10-6.8a1.1 1.1 0 0 0 0-1.8l-10-6.8C8.9 3.9 8 4.4 8 5.2Z"/></svg>
+      </button>
       <a class="song-apple-link" data-apple-link-id="${s.id}" href="#" target="_blank" rel="noopener" onclick="event.stopPropagation()">Abrir na Apple</a>
     </div>`;
   }).join('');
