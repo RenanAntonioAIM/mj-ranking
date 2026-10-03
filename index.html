@@ -63,7 +63,7 @@ h2{font-size:34px;margin:0 0 10px;letter-spacing:-.03em}
 .song:hover{border-color:#737b8c;transform:translateY(-4px)}
 .song img{width:190px;height:190px;object-fit:cover;border-radius:16px;box-shadow:0 18px 40px #0008;margin-bottom:22px}
 .song-title{font-size:28px;font-weight:850;letter-spacing:-.035em;color:#f7f7f8;line-height:1.12;text-shadow:0 2px 14px #000}.song-album{color:#b8bfca;margin-top:8px;font-size:14px}
-.no-rank{margin-top:20px;color:#727887;font-size:12px}
+.battle-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px}.battle-action-btn{margin:0;padding:10px 14px;font-size:12px}.battle-action-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}.no-rank{margin-top:16px;color:#727887;font-size:12px}
 .results{max-width:900px;margin:auto}
 .rank-list{margin-top:24px;border:1px solid var(--line);border-radius:20px;overflow:hidden}
 .rank-row{display:grid;grid-template-columns:72px 1fr auto;align-items:center;gap:16px;padding:16px 20px;border-bottom:1px solid var(--line);background:#0e1117;min-height:78px;transition:.18s}
@@ -80,7 +80,7 @@ h2{font-size:34px;margin:0 0 10px;letter-spacing:-.03em}
 .badge{font-size:12px;color:var(--muted)}
 .fun{margin-top:24px}.fun-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.fact{padding:18px;border:1px solid var(--line);background:var(--panel);border-radius:18px}.fact b{display:block;margin-bottom:7px}.fact span{color:#c2c7d0;line-height:1.5;font-size:14px}
 @media(max-width:800px){.grid{grid-template-columns:1fr 1fr}.album-grid{grid-template-columns:repeat(2,1fr)}.duel{grid-template-columns:1fr}.song{min-height:280px}.fun-grid{grid-template-columns:1fr}}
-@media(max-width:520px){.app{padding:20px 14px 40px}.grid{grid-template-columns:1fr}.card img{height:270px}.topbar{margin-bottom:15px}.section-head{align-items:start;flex-direction:column}.duel{gap:12px}.song{min-height:250px}.song img{width:140px;height:140px}.song-title{font-size:24px}}
+@media(max-width:520px){.app{padding:20px 14px 40px}.grid{grid-template-columns:1fr}.card{min-height:230px;border-radius:17px}.card img{height:185px}.card-info{left:14px;right:14px;bottom:13px}.card-title{font-size:19px}.card-meta{font-size:12px}.topbar{margin-bottom:15px}.section-head{align-items:start;flex-direction:column}.duel{gap:10px}.song{min-height:220px;padding:18px 14px;border-radius:20px}.song img{width:118px;height:118px;margin-bottom:14px;border-radius:13px}.song-title{font-size:20px}.song-album{font-size:12px;margin-top:6px}.ranking-progress{margin-bottom:14px;padding:11px 13px}.ranking-progress-detail{font-size:11px}}
 
 .local-art{
   width:100%;height:250px;display:flex;align-items:flex-end;justify-content:center;
@@ -320,7 +320,7 @@ body:has(.home-screen.active) .logo {
 .save-modal.open{display:flex}.save-card{width:min(720px,100%);max-height:88vh;overflow:auto;background:#0d1016;border:1px solid #343a48;border-radius:26px;padding:26px;box-shadow:0 30px 100px #000}
 .save-head{display:flex;justify-content:space-between;gap:15px;align-items:start}.save-head h3{margin:5px 0 4px;font-size:28px;letter-spacing:-.03em}.save-note{color:var(--muted);font-size:13px;line-height:1.5;margin:10px 0 18px}
 .save-item{border:1px solid var(--line);border-radius:18px;padding:16px;margin:10px 0;background:#10141c}.save-item-title{font-weight:900;font-size:16px}.save-item-meta{color:var(--muted);font-size:12px;margin-top:5px}.save-item-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.save-empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:18px}
-.resume-banner{border:1px solid #6e5a2b;background:linear-gradient(135deg,#1a1710,#10131b);border-radius:20px;padding:18px;margin-top:18px}.resume-banner b{display:block;margin-bottom:5px}.resume-banner span{display:block;color:var(--muted);font-size:13px;line-height:1.45}
+.save-form{display:grid;gap:12px;margin-top:18px}.save-form label{font-size:12px;color:#b8bec9;font-weight:800}.save-form input{width:100%;border:1px solid #3a414f;background:#090c12;color:var(--text);border-radius:12px;padding:13px 14px;outline:none}.save-form input:focus{border-color:var(--gold);box-shadow:0 0 0 2px #d9b35a22}.resume-banner{border:1px solid #6e5a2b;background:linear-gradient(135deg,#1a1710,#10131b);border-radius:20px;padding:18px;margin-top:18px}.resume-banner b{display:block;margin-bottom:5px}.resume-banner span{display:block;color:var(--muted);font-size:13px;line-height:1.45}
 
 
 .auth-area{display:flex;align-items:center;gap:8px;margin-left:8px}
@@ -426,6 +426,10 @@ body:has(.home-screen.active) .logo {
         <div class="ranking-progress-detail" id="rankingProgressDetail">0 de 0 posições definidas</div>
       </div>
       <div class="duel" id="duel"></div>
+      <div class="battle-actions" id="battleActions">
+        <button class="secondary battle-action-btn" id="undoButton" onclick="undoLastChoice()" disabled>↩ Desfazer último voto</button>
+        <button class="secondary battle-action-btn" onclick="openSaveGameModal()">💾 Salvar e sair</button>
+      </div>
       <div class="no-rank">Sem posição. Sem pontuação. Só sua escolha.</div>
     </div>
   </section>
@@ -745,6 +749,7 @@ const DB = {
 function gameSnapshot(){
   return {
     id:'activeGame', version:1, phase:'battle', savedAt:Date.now(),
+    title:activeGameTitle || 'Partida em andamento',
     selectedCatalogs:[...selectedCatalogs], selectedAlbums:[...selectedAlbums],
     songs, matches, wins, currentPair
   };
@@ -805,7 +810,10 @@ async function openSavedRankings(){
     await Promise.all(list.map(r=>DB.put(DB_STORES.rankings,r).catch(()=>{})));
   }
   list.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-  body.innerHTML=list.length?list.map(r=>`<div class="save-item"><div class="save-item-title">${escapeHtml(r.title)}</div><div class="save-item-meta">${r.songCount} músicas · ${r.matchCount} confrontos · ${formatSavedDate(r.createdAt)}</div><div class="save-item-actions"><button class="secondary saved-view-btn" data-ranking-id="${escapeHtml(r.id)}">Ver ranking</button><button class="secondary saved-delete-btn" data-ranking-id="${escapeHtml(r.id)}">Excluir</button></div></div>`).join(''):'<div class="save-empty">Nenhum ranking finalizado ainda.</div>';
+  const active=await loadActiveGame().catch(()=>null);
+  const activeHtml=active?`<div class="resume-banner"><b>${escapeHtml(active.title||'Partida em andamento')}</b><span>${active.songs?.length||0} músicas · ${active.matches?.length||0} confrontos já realizados · último salvamento ${formatSavedDate(active.savedAt)}</span><div class="save-item-actions"><button class="primary" style="margin:8px 0 0" onclick="resumeActiveGame()">CONTINUAR PARTIDA</button><button class="secondary" onclick="discardActiveGame()">DESCARTAR</button></div></div>`:'';
+  const rankingsHtml=list.length?list.map(r=>`<div class="save-item"><div class="save-item-title">${escapeHtml(r.title)}</div><div class="save-item-meta">${r.songCount} músicas · ${r.matchCount} confrontos · ${formatSavedDate(r.createdAt)}</div><div class="save-item-actions"><button class="secondary saved-view-btn" data-ranking-id="${escapeHtml(r.id)}">Ver ranking</button><button class="secondary saved-delete-btn" data-ranking-id="${escapeHtml(r.id)}">Excluir</button></div></div>`).join(''):'<div class="save-empty">Nenhum ranking finalizado ainda.</div>';
+  body.innerHTML=activeHtml+`<div class="provisional" style="margin-top:24px">RANKINGS FINALIZADOS</div>`+rankingsHtml;
 }
 function escapeHtml(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
 function closeSaveModal(){document.getElementById('saveModal').classList.remove('open');}
@@ -879,18 +887,67 @@ async function viewSavedRanking(id){
   document.getElementById('facts').innerHTML='<div class="fact"><b>💾 Ranking salvo</b><span>Este resultado foi recuperado do armazenamento local do navegador.</span></div>';
   go('results');
 }
+function openSaveGameModal(){
+  if(!songs.length) return;
+  const body=document.getElementById('saveModalBody');
+  const current=activeGameTitle || '';
+  document.getElementById('saveModalTitle').textContent='Salvar partida';
+  body.innerHTML=`
+    <div class="save-note">Dê um nome para encontrar esta partida depois e continuar exatamente de onde parou.</div>
+    <div class="save-form">
+      <label for="saveGameName">Nome da partida</label>
+      <input id="saveGameName" maxlength="60" autocomplete="off" placeholder="Ex.: Meu ranking com meu irmão" value="${escapeHtml(current)}">
+      <div class="actions" style="margin-top:4px">
+        <button class="secondary" onclick="closeSaveModal()">Cancelar</button>
+        <button class="primary" style="margin:0" onclick="confirmSaveGame()">Salvar e sair</button>
+      </div>
+    </div>`;
+  document.getElementById('saveModal').classList.add('open');
+  setTimeout(()=>document.getElementById('saveGameName')?.focus(),50);
+}
+async function confirmSaveGame(){
+  const input=document.getElementById('saveGameName');
+  const name=(input?.value||'').trim();
+  if(!name){alert('Digite um nome para a partida.'); input?.focus(); return;}
+  activeGameTitle=name;
+  await saveActiveGame();
+  closeSaveModal();
+  toast('Partida salva. Você pode continuar depois.');
+  go('home');
+}
+function renderUndoButton(){
+  const btn=document.getElementById('undoButton');
+  if(btn) btn.disabled=!matches.length || !!finishPromise;
+}
+async function undoLastChoice(){
+  if(!matches.length || finishPromise) return;
+  const last=matches.pop();
+  const winnerId=last[2];
+  wins[winnerId]=Math.max(0,(wins[winnerId]||0)-1);
+  const a=songs.find(s=>s.id===last[0]);
+  const b=songs.find(s=>s.id===last[1]);
+  if(!a || !b) return;
+  currentPair=[a,b];
+  await saveActiveGame();
+  renderRankingProgress();
+  renderCurrentPair();
+  renderUndoButton();
+  toast('Último voto desfeito. Escolha novamente.');
+}
+
 async function restoreActiveGame(){
   const saved=await loadActiveGame();
   if(!saved || !saved.songs || !saved.songs.length) return;
   const body=document.getElementById('saveModalBody');
   document.getElementById('saveModalTitle').textContent='Partida em andamento';
   const count=saved.matches?.length||0;
-  body.innerHTML=`<div class="resume-banner"><b>Encontramos uma partida que ainda não terminou.</b><span>${saved.songs.length} músicas · ${count} confrontos já realizados · último salvamento ${formatSavedDate(saved.savedAt)}</span></div><div class="save-item-actions"><button class="primary" onclick="resumeActiveGame()">CONTINUAR PARTIDA</button><button class="secondary" onclick="discardActiveGame()">DESCARTAR E COMEÇAR NOVA</button></div>`;
+  body.innerHTML=`<div class="resume-banner"><b>${escapeHtml(saved.title||'Partida em andamento')}</b><span>Encontramos uma partida que ainda não terminou. ${saved.songs.length} músicas · ${count} confrontos já realizados · último salvamento ${formatSavedDate(saved.savedAt)}</span></div><div class="save-item-actions"><button class="primary" onclick="resumeActiveGame()">CONTINUAR PARTIDA</button><button class="secondary" onclick="discardActiveGame()">DESCARTAR E COMEÇAR NOVA</button></div>`;
   document.getElementById('saveModal').classList.add('open');
 }
 async function resumeActiveGame(){
   const saved=await loadActiveGame(); if(!saved)return;
   selectedCatalogs=new Set(saved.selectedCatalogs||[]); selectedAlbums=new Set(saved.selectedAlbums||[]);
+  activeGameTitle=saved.title||'';
   songs=saved.songs||[]; matches=saved.matches||[]; wins=saved.wins||{}; currentPair=saved.currentPair||null;
   closeSaveModal();
   if(currentPair) renderCurrentPair(); else nextPair();
@@ -927,7 +984,7 @@ function closeNavMenu(){
 async function abandonGame(){
   closeNavMenu();
   if(confirm('Desistir desta partida e voltar para a seleção de catálogos?')){
-    songs=[]; matches=[]; wins={}; currentPair=null;
+    songs=[]; matches=[]; wins={}; currentPair=null; activeGameTitle='';
     await DB.delete(DB_STORES.active,'activeGame');
     go('catalog');
   }
@@ -996,11 +1053,13 @@ function startGame(){
     .filter(s=>selected.includes(catalogs.find(c=>c.title===s.catalog)?.id+'|'+s.album))
     .map((s,i)=>({id:i,title:s.title,album:s.album,catalog:s.catalog}));
   if(songs.length<2){ alert('Selecione pelo menos duas músicas.'); return; }
+  activeGameTitle='';
   wins={}; songs.forEach(s=>wins[s.id]=0); matches=[];
   nextPair();
   go('battle');
   saveActiveGame();
 }
+let activeGameTitle='';
 let finishPromise=null;
 function hasPath(fromId,toId){
   if(fromId===toId) return true;
@@ -1131,6 +1190,7 @@ async function choose(id){
   currentPair=null;
   renderRankingProgress();
   await saveActiveGame();
+  renderUndoButton();
   if(rankingIsResolved()){
     finishPromise=finish();
     await finishPromise;
@@ -1182,6 +1242,7 @@ function nextPair(){
 function renderCurrentPair(){
   if(!currentPair)return;
   renderRankingProgress();
+  renderUndoButton();
   document.getElementById('duel').innerHTML=currentPair.map(s=>`<button class="song" onclick="choose(${s.id})">${ALBUM_IMG[s.title]||ALBUM_IMG[s.album]?`<img class="real-img" src="${ALBUM_IMG[s.title]||ALBUM_IMG[s.album]}" alt="${s.album}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:''}<div class="local-art" style="display:${(ALBUM_IMG[s.title]||ALBUM_IMG[s.album])?'none':'flex'};width:190px;height:190px;border-radius:16px;flex:none;--a:#272b3c;--b:#090b10"><div class="art-label">MJ<br>SONG</div></div><div class="song-title">${escapeHtml(s.title)}</div><div class="song-album">${escapeHtml(s.album)}</div></button>`).join('');
 }
 function openCurrentRanking(){
@@ -1212,6 +1273,7 @@ async function finish(){
   }
   await DB.delete(DB_STORES.active,'activeGame').catch(()=>{});
   if(window.MJCloud?.user) await window.MJCloud.deleteGame().catch(()=>{});
+  activeGameTitle='';
   document.getElementById('resultMeta').textContent=`${songs.length} músicas • ${matches.length} confrontos`;
   document.getElementById('rankList').innerHTML=renderFinalRanking(ranking);
   document.getElementById('facts').innerHTML=`
