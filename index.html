@@ -474,6 +474,8 @@ body:has(.home-screen.active) .logo {
 <div class="auth-toast" id="authToast"></div>
 
 <script type="module">
+const APP_VERSION = '1.4.0';
+const CATALOG_VERSION = '356';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, deleteDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
@@ -701,8 +703,6 @@ const masterSongs = [{"title":"Zip-A-Dee-Doo-Dah","album":"Diana Ross Presents t
 // =========================
 // Persistência local (IndexedDB)
 // =========================
-const APP_VERSION = '1.4.0';
-const CATALOG_VERSION = '356';
 const DB_NAME = 'MJSongRankerDB';
 const DB_VERSION = 1;
 const DB_STORES = { active: 'partidas', rankings: 'rankings' };
@@ -1354,7 +1354,7 @@ async function findApplePreview(song){
       };
       const knownTrackId=appleTrackIds[song.title];
       if(knownTrackId){
-        const lookupUrl=\`https://itunes.apple.com/lookup?id=\${knownTrackId}&entity=song&country=br\`;
+        const lookupUrl=`https://itunes.apple.com/lookup?id=${knownTrackId}&entity=song&country=br`;
         const lookupResponse=await fetch(lookupUrl);
         if(lookupResponse.ok){
           const lookupData=await lookupResponse.json();
