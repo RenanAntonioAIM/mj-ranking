@@ -57,13 +57,13 @@ h2{font-size:34px;margin:0 0 10px;letter-spacing:-.03em}
 .summary-row{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:13px 0}.summary-row:last-child{border-bottom:0}
 .battle{min-height:calc(100vh - 150px);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:28px 0 40px}.battle .question{color:#b9c7dd;text-shadow:0 2px 14px #000}
 .question{color:var(--muted);letter-spacing:.18em;text-transform:uppercase;font-size:12px;font-weight:800;margin-bottom:22px}
-.ranking-progress{width:min(900px,100%);margin:0 0 22px;padding:14px 16px;border:1px solid #383f4d;border-radius:16px;background:rgba(13,16,22,.78);box-shadow:0 12px 32px #0004;text-align:left}.ranking-progress-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:9px}.ranking-progress-title{color:#d7dbe3;font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase}.ranking-progress-value{color:var(--gold);font-size:13px;font-weight:900;white-space:nowrap}.ranking-progress-track{height:8px;overflow:hidden;border-radius:999px;background:#252b36;box-shadow:inset 0 1px 2px #0008}.ranking-progress-fill{width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#a87e2d,#f0cd73);box-shadow:0 0 16px #d9b35a77;transition:width .28s ease}.ranking-progress-detail{margin-top:8px;color:var(--muted);font-size:12px}
+.ranking-progress{width:min(900px,100%);margin:0 0 22px;padding:14px 16px;border:1px solid #383f4d;border-radius:16px;background:rgba(13,16,22,.78);box-shadow:0 12px 32px #0004;text-align:left}.ranking-progress-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:9px}.ranking-progress-title{color:#d7dbe3;font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase}.ranking-progress-value{color:var(--gold);font-size:13px;font-weight:900;white-space:nowrap}.ranking-progress-track{height:8px;position:relative;overflow:visible;border-radius:999px;background:#252b36;box-shadow:inset 0 1px 2px #0008}.ranking-progress-fill{width:0;height:100%;position:relative;z-index:1;border-radius:inherit;background:linear-gradient(90deg,#a87e2d,#f0cd73);box-shadow:0 0 16px #d9b35a77;transition:width .28s ease}.ranking-progress-marker{position:absolute;left:0;bottom:-1px;z-index:2;width:16px;height:38px;object-fit:contain;pointer-events:none;transform:translateX(-50%);filter:drop-shadow(0 2px 5px #0009);transition:left .28s ease}.ranking-progress-detail{margin-top:8px;color:var(--muted);font-size:12px}
 .duel{display:grid;grid-template-columns:1fr 1fr;gap:18px;width:min(900px,100%)}
-.song{border:1px solid var(--line);background:linear-gradient(180deg,#151923,#0d1016);color:var(--text);border-radius:26px;padding:28px 20px;cursor:pointer;min-height:350px;transition:.18s;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}\n.song{position:relative}\n.song-preview{margin-top:14px;width:44px;height:44px;padding:0;border:1px solid #4a5262;background:#0a0d13;color:#d9b35a;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:.18s;position:relative;z-index:2;box-shadow:0 6px 18px #0005}.song-preview:hover{border-color:#d9b35a;background:#141923;transform:translateY(-2px)}.song-preview.playing{background:#d9b35a;color:#0a0b0f;border-color:#d9b35a}.song-preview.unavailable{color:#737b8a;border-color:#303542;cursor:default}.song-preview:disabled{opacity:.65;cursor:wait;transform:none}.preview-icon{width:20px;height:20px;display:block;object-fit:contain}.preview-spinner{width:15px;height:15px;border:2px solid #777f8a;border-top-color:#d9b35a;border-radius:50%;animation:previewSpin .7s linear infinite}.preview-unavailable{font-size:19px;line-height:1}@keyframes previewSpin{to{transform:rotate(360deg)}}
+.song{border:1px solid var(--line);background:linear-gradient(180deg,#151923,#0d1016);color:var(--text);border-radius:26px;padding:28px 20px;cursor:pointer;min-height:350px;transition:.18s;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}\n.song{position:relative}\n.song-preview{margin-top:14px;width:40px;height:40px;padding:0;border:1px solid #4a5262;background:#0a0d13;color:#d9b35a;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:.18s;position:relative;z-index:2;box-shadow:0 6px 18px #0005}.song-preview:hover{border-color:#d9b35a;background:#141923;transform:translateY(-2px)}.song-preview.playing{background:#d9b35a;color:#0a0b0f;border-color:#d9b35a}.song-preview.unavailable{color:#737b8a;border-color:#303542;cursor:default}.song-preview:disabled{opacity:.65;cursor:wait;transform:none}.preview-icon{width:20px;height:20px;display:block;object-fit:contain}.preview-spinner{width:15px;height:15px;border:2px solid #777f8a;border-top-color:#d9b35a;border-radius:50%;animation:previewSpin .7s linear infinite}.preview-unavailable{font-size:19px;line-height:1}@keyframes previewSpin{to{transform:rotate(360deg)}}
 .song:hover{border-color:#737b8c;transform:translateY(-4px)}
 .song.choice-winner{border-color:#d9b35a;box-shadow:0 0 0 2px #d9b35a66,0 0 34px #d9b35a55,0 18px 40px #0008;animation:winnerPulse .42s ease-out forwards}
 @keyframes winnerPulse{0%{transform:scale(1);box-shadow:0 0 0 0 #d9b35a00,0 0 0 #d9b35a00,0 18px 40px #0008}45%{transform:scale(1.025);box-shadow:0 0 0 5px #d9b35a33,0 0 38px #d9b35a66,0 22px 48px #0009}100%{transform:scale(1.015);box-shadow:0 0 0 2px #d9b35a66,0 0 28px #d9b35a55,0 18px 40px #0008}}
-.song img{width:190px;height:190px;object-fit:cover;border-radius:16px;box-shadow:0 18px 40px #0008;margin-bottom:22px}.song .song-preview .preview-icon{width:20px;height:20px;margin:0;object-fit:contain;box-shadow:none;border-radius:0}
+.song img{width:190px;height:190px;object-fit:cover;border-radius:16px;box-shadow:0 18px 40px #0008;margin-bottom:22px}.song .song-preview .preview-icon{width:100%;height:100%;margin:0;object-fit:contain;box-shadow:none;border-radius:0}
 .song-title{font-size:28px;font-weight:850;letter-spacing:-.035em;color:#f7f7f8;line-height:1.12;text-shadow:0 2px 14px #000}.song-album{color:#b8bfca;margin-top:8px;font-size:14px}
 .battle-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px}.battle-action-btn{margin:0;padding:10px 14px;font-size:12px}.battle-action-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}.no-rank{margin-top:16px;color:#727887;font-size:12px}
 .results{max-width:900px;margin:auto}
@@ -424,6 +424,7 @@ body:has(.home-screen.active) .logo {
         </div>
         <div class="ranking-progress-track" role="progressbar" aria-label="Progresso do ranking" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="rankingProgressTrack">
           <div class="ranking-progress-fill" id="rankingProgressFill"></div>
+          <img class="ranking-progress-marker" id="rankingProgressMarker" src="assets/mj-progress-icon.svg" alt="" aria-hidden="true">
         </div>
         <div class="ranking-progress-detail" id="rankingProgressDetail">0 de 0 posições definidas</div>
       </div>
@@ -1090,7 +1091,7 @@ function relation(aId,bId){
   if(ba && !ab) return -1;  // b > a
   return 0;                 // ainda não determinado ou ciclo
 }
-function buildProvisionalOrder(){
+function buildProvisionalOrder(shuffleTies=true){
   // Topological sort of the currently known graph. When more than one
   // song is available, shuffle the tied candidates so the UI does not
   // suggest a false deterministic ranking before the evidence exists.
@@ -1107,9 +1108,11 @@ function buildProvisionalOrder(){
   const available=ids.filter(id=>indegree.get(id)===0);
   const order=[];
   while(available.length){
-    for(let i=available.length-1;i>0;i--){
-      const j=Math.floor(Math.random()*(i+1));
-      [available[i],available[j]]=[available[j],available[i]];
+    if(shuffleTies){
+      for(let i=available.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [available[i],available[j]]=[available[j],available[i]];
+      }
     }
     const id=available.shift();
     order.push(id);
@@ -1168,9 +1171,21 @@ function rankingIsResolved(){
 }
 function getRankingProgress(){
   const total=songs.length;
-  if(!total) return {defined:0,total:0,percent:0};
-  const defined=songs.filter(song=>songs.every(other=>other.id===song.id || relation(song.id,other.id)!==0)).length;
-  return {defined,total,percent:Math.round((defined/total)*100)};
+  if(total<=1) return {defined:total,total:total,percent:total?100:0};
+  // The game finishes when every adjacent boundary in the provisional order
+  // is determined. Count those boundaries instead of requiring each song to
+  // already be comparable with every other song.
+  const order=buildProvisionalOrder(false);
+  let defined=0;
+  for(let i=0;i<order.length-1;i++){
+    if(relation(order[i].id,order[i+1].id)!==0) defined++;
+  }
+  const totalBoundaries=total-1;
+  return {
+    defined,
+    total:totalBoundaries,
+    percent:Math.round((defined/totalBoundaries)*1000)/10
+  };
 }
 function renderRankingProgress(){
   const {defined,total,percent}=getRankingProgress();
@@ -1178,10 +1193,12 @@ function renderRankingProgress(){
   const track=document.getElementById('rankingProgressTrack');
   const percentLabel=document.getElementById('rankingProgressPercent');
   const detail=document.getElementById('rankingProgressDetail');
+  const marker=document.getElementById('rankingProgressMarker');
   if(fill) fill.style.width=`${percent}%`;
+  if(marker) marker.style.left=`${percent}%`;
   if(track) track.setAttribute('aria-valuenow',String(percent));
-  if(percentLabel) percentLabel.textContent=`${percent}%`;
-  if(detail) detail.textContent=`${defined} de ${total} posições definidas`;
+  if(percentLabel) percentLabel.textContent=`${percent.toLocaleString('pt-BR',{minimumFractionDigits:percent%1?1:0,maximumFractionDigits:1})}%`;
+  if(detail) detail.textContent=`${defined} de ${total} separações definidas`;
 }
 let choiceAnimating=false;
 async function choose(id){
@@ -1326,7 +1343,7 @@ async function togglePreview(id,event){
   audio.preload='none'; previewAudio=audio; previewSongId=id;
   audio.onended=()=>stopPreview();
   audio.onerror=()=>{stopPreview();btn.classList.add('unavailable');btn.innerHTML='<span class="preview-unavailable">×</span>';};
-  btn.disabled=false; btn.classList.add('playing'); btn.innerHTML='<svg class="preview-icon preview-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="5" width="3.5" height="14" rx="1"/><rect x="13.5" y="5" width="3.5" height="14" rx="1"/></svg>';
+  btn.disabled=false; btn.classList.add('playing'); btn.innerHTML='<img class="preview-icon" src="assets/pause-icon.svg" alt="">';
   try{await audio.play();}catch(err){stopPreview();btn.classList.add('unavailable');btn.innerHTML='<span class="preview-unavailable">×</span>';}
 }
 function renderCurrentPair(){
