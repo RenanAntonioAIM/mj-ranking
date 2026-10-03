@@ -14,7 +14,7 @@ body{margin:0;background:radial-gradient(circle at 50% -10%,#242633 0,#0b0c11 38
 button{font:inherit}
 .app{max-width:1180px;margin:auto;padding:28px 24px 56px}
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:34px}
-.logo{display:flex;align-items:center;height:32px}.logo img{display:block;width:58px;height:32px;object-fit:contain;object-position:left center}
+.logo{display:flex;align-items:center;height:32px;padding:0;border:0;background:transparent;cursor:pointer}.logo img{display:block;width:58px;height:32px;object-fit:contain;object-position:left center}.logo:hover img{filter:brightness(1.12)}
 .progress{color:var(--muted);font-size:13px}.rank-button{border:1px solid var(--line);background:#0d1016;color:var(--text);padding:10px 15px;border-radius:999px;cursor:pointer;font-size:12px;font-weight:800}.rank-button:hover{border-color:#737b8c}.rank-modal{position:fixed;inset:0;background:#000b;backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}.rank-modal.open{display:flex}.rank-modal-card{width:min(760px,100%);max-height:88vh;overflow:auto;background:#0d1016;border:1px solid #343a48;border-radius:26px;padding:26px;box-shadow:0 30px 100px #000}.rank-modal-head{display:flex;justify-content:space-between;gap:15px;align-items:start}.rank-modal-head h3{margin:5px 0 4px;font-size:30px;letter-spacing:-.03em}.provisional{color:var(--gold);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:800}.close{border:1px solid var(--line);background:transparent;color:var(--text);width:38px;height:38px;border-radius:50%;cursor:pointer}.modal-note{color:var(--muted);font-size:13px;line-height:1.5;margin:10px 0 18px}.modal-rank-list{border:1px solid var(--line);border-radius:18px;overflow:hidden}.modal-rank-row{display:grid;grid-template-columns:48px 1fr;gap:12px;align-items:center;padding:12px 15px;border-bottom:1px solid var(--line)}.modal-rank-row:last-child{border-bottom:0}.modal-rank-num{font-weight:900;color:#777f8d}.modal-rank-song{font-weight:800}.modal-rank-album{font-size:12px;color:var(--muted);margin-top:3px}.real-img{width:100%;height:250px;object-fit:cover;display:block}.album-cover .real-img{height:100%;aspect-ratio:1}.song .real-img{width:190px;height:190px;border-radius:16px;box-shadow:0 18px 40px #0008;margin-bottom:22px}
 .screen{display:none}.screen.active{display:block}
 .hero{text-align:center;padding:30px 0 26px}
@@ -358,7 +358,7 @@ body:has(.home-screen.active) .logo {
 <div class="app-version" id="appVersion">MJ SONG RANKER · v1.4.0 · CATÁLOGO 356</div>
 <div class="app" id="mainApp">
   <div class="topbar" style="display:none" id="topbar">
-    <div class="logo"><img src="assets/image-003.png" alt="MJ Song Ranker"></div>
+    <button class="logo" type="button" aria-label="Voltar ao início" title="Voltar ao início" onclick="go('home')"><img src="assets/image-003.png" alt="MJ Song Ranker"></button>
     <div class="top-actions">
       <button class="rank-button" id="rankButton" style="display:none" onclick="openCurrentRanking()">Ver ranking atual</button>
       <div class="progress" id="progress"></div>
