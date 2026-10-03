@@ -922,7 +922,7 @@ async function viewSavedRanking(id){
   closeSaveModal();
   document.getElementById('resultMeta').textContent=`${r.songCount} músicas • ${r.matchCount} confrontos • ranking salvo`;
   document.getElementById('rankList').innerHTML=renderFinalRanking(r.ranking);
-  document.getElementById('facts').innerHTML='<div class="fact"><b>💾 Ranking salvo</b><span>Este resultado foi recuperado do armazenamento local do navegador.</span></div>';
+  document.getElementById('facts').innerHTML=renderDynamicFacts(r.ranking,r.matches||[]);
   go('results');
 }
 function openSaveGameModal(){
