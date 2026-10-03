@@ -1296,6 +1296,8 @@ async function togglePreview(id,event){
   audio.onended=()=>stopPreview();
   audio.onerror=()=>{stopPreview();btn.classList.add('unavailable');btn.textContent='Trecho indisponível';};
   btn.disabled=false; btn.classList.add('playing'); btn.textContent='⏸ Pausar trecho';
+  const appleLink=document.querySelector(`.song-apple-link[data-apple-link-id="${CSS.escape(String(id))}"]`);
+  if(appleLink && result.trackViewUrl){ appleLink.href=result.trackViewUrl; appleLink.style.display='block'; }
   try{await audio.play();}catch(err){stopPreview();btn.classList.add('unavailable');btn.textContent='Trecho indisponível';}
 }
 function renderCurrentPair(){
@@ -1308,7 +1310,7 @@ function renderCurrentPair(){
       <div class="local-art" style="display:${art?'none':'flex'};width:190px;height:190px;border-radius:16px;flex:none;--a:#272b3c;--b:#090b10"><div class="art-label">MJ<br>SONG</div></div>
       <div class="song-title">${escapeHtml(s.title)}</div><div class="song-album">${escapeHtml(s.album)}</div>
       <button type="button" class="song-preview" data-song-id="${s.id}" onclick="togglePreview(${s.id},event)">▶ Ouvir trecho</button>
-      <span class="song-apple-link">prévia fornecida pela Apple</span>
+      <a class="song-apple-link" data-apple-link-id="${s.id}" href="#" target="_blank" rel="noopener" onclick="event.stopPropagation()">Abrir na Apple</a>
     </div>`;
   }).join('');
 }
