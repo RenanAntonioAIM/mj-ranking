@@ -61,7 +61,9 @@ h2{font-size:34px;margin:0 0 10px;letter-spacing:-.03em}
 .duel{display:grid;grid-template-columns:1fr 1fr;gap:18px;width:min(900px,100%)}
 .song{border:1px solid var(--line);background:linear-gradient(180deg,#151923,#0d1016);color:var(--text);border-radius:26px;padding:28px 20px;cursor:pointer;min-height:350px;transition:.18s;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}\n.song{position:relative}\n.song-preview{margin-top:14px;width:44px;height:44px;padding:0;border:1px solid #4a5262;background:#0a0d13;color:#d9b35a;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:.18s;position:relative;z-index:2;box-shadow:0 6px 18px #0005}.song-preview:hover{border-color:#d9b35a;background:#141923;transform:translateY(-2px)}.song-preview.playing{background:#d9b35a;color:#0a0b0f;border-color:#d9b35a}.song-preview.unavailable{color:#737b8a;border-color:#303542;cursor:default}.song-preview:disabled{opacity:.65;cursor:wait;transform:none}.preview-icon{width:20px;height:20px;display:block;object-fit:contain}.preview-spinner{width:15px;height:15px;border:2px solid #777f8a;border-top-color:#d9b35a;border-radius:50%;animation:previewSpin .7s linear infinite}.preview-unavailable{font-size:19px;line-height:1}@keyframes previewSpin{to{transform:rotate(360deg)}}
 .song:hover{border-color:#737b8c;transform:translateY(-4px)}
-.song img{width:190px;height:190px;object-fit:cover;border-radius:16px;box-shadow:0 18px 40px #0008;margin-bottom:22px}
+.song.choice-winner{border-color:#d9b35a;box-shadow:0 0 0 2px #d9b35a66,0 0 34px #d9b35a55,0 18px 40px #0008;animation:winnerPulse .42s ease-out forwards}
+@keyframes winnerPulse{0%{transform:scale(1);box-shadow:0 0 0 0 #d9b35a00,0 0 0 #d9b35a00,0 18px 40px #0008}45%{transform:scale(1.025);box-shadow:0 0 0 5px #d9b35a33,0 0 38px #d9b35a66,0 22px 48px #0009}100%{transform:scale(1.015);box-shadow:0 0 0 2px #d9b35a66,0 0 28px #d9b35a55,0 18px 40px #0008}}
+.song img{width:190px;height:190px;object-fit:cover;border-radius:16px;box-shadow:0 18px 40px #0008;margin-bottom:22px}.song .song-preview .preview-icon{width:20px;height:20px;margin:0;object-fit:contain;box-shadow:none;border-radius:0}
 .song-title{font-size:28px;font-weight:850;letter-spacing:-.035em;color:#f7f7f8;line-height:1.12;text-shadow:0 2px 14px #000}.song-album{color:#b8bfca;margin-top:8px;font-size:14px}
 .battle-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px}.battle-action-btn{margin:0;padding:10px 14px;font-size:12px}.battle-action-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}.no-rank{margin-top:16px;color:#727887;font-size:12px}
 .results{max-width:900px;margin:auto}
@@ -1181,17 +1183,24 @@ function renderRankingProgress(){
   if(percentLabel) percentLabel.textContent=`${percent}%`;
   if(detail) detail.textContent=`${defined} de ${total} posições definidas`;
 }
+let choiceAnimating=false;
 async function choose(id){
   stopPreview();
+  if(choiceAnimating) return;
   if(!currentPair || !currentPair.some(s=>s.id===id) || finishPromise) return;
   const [a,b]=currentPair;
   if(relation(a.id,b.id)!==0) return;
+  choiceAnimating=true;
+  const winnerCard=document.querySelector(`.song[data-song-id="${CSS.escape(String(id))}"]`);
+  if(winnerCard) winnerCard.classList.add('choice-winner');
   wins[id]=(wins[id]||0)+1;
   matches.push([a.id,b.id,id]);
   currentPair=null;
   renderRankingProgress();
   await saveActiveGame();
   renderUndoButton();
+  await new Promise(resolve=>setTimeout(resolve,420));
+  choiceAnimating=false;
   if(rankingIsResolved()){
     finishPromise=finish();
     await finishPromise;
@@ -1322,10 +1331,11 @@ async function togglePreview(id,event){
 }
 function renderCurrentPair(){
   if(!currentPair)return;
+  choiceAnimating=false;
   stopPreview(); renderRankingProgress(); renderUndoButton();
   document.getElementById('duel').innerHTML=currentPair.map(s=>{
     const art=ALBUM_IMG[s.title]||ALBUM_IMG[s.album];
-    return `<div class="song" role="button" tabindex="0" onclick="choose(${s.id})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();choose(${s.id})}">
+    return `<div class="song" data-song-id="${s.id}" role="button" tabindex="0" onclick="choose(${s.id})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();choose(${s.id})}">
       ${art?`<img class="real-img" src="${art}" alt="${escapeHtml(s.album)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:''}
       <div class="local-art" style="display:${art?'none':'flex'};width:190px;height:190px;border-radius:16px;flex:none;--a:#272b3c;--b:#090b10"><div class="art-label">MJ<br>SONG</div></div>
       <div class="song-title">${escapeHtml(s.title)}</div><div class="song-album">${escapeHtml(s.album)}</div>
