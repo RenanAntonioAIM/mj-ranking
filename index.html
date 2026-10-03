@@ -57,7 +57,7 @@ h2{font-size:34px;margin:0 0 10px;letter-spacing:-.03em}
 .summary-row{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:13px 0}.summary-row:last-child{border-bottom:0}
 .battle{min-height:calc(100vh - 150px);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:28px 0 40px}.battle .question{color:#b9c7dd;text-shadow:0 2px 14px #000}
 .question{color:var(--muted);letter-spacing:.18em;text-transform:uppercase;font-size:12px;font-weight:800;margin-bottom:22px}
-.ranking-progress{width:min(900px,100%);margin:0 0 22px;padding:14px 16px;border:1px solid #383f4d;border-radius:16px;background:rgba(13,16,22,.78);box-shadow:0 12px 32px #0004;text-align:left}.ranking-progress-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:9px}.ranking-progress-title{color:#d7dbe3;font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase}.ranking-progress-value{color:var(--gold);font-size:13px;font-weight:900;white-space:nowrap}.ranking-progress-track{height:8px;overflow:hidden;border-radius:999px;background:#252b36;box-shadow:inset 0 1px 2px #0008}.ranking-progress-fill{width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#a87e2d,#f0cd73);box-shadow:0 0 16px #d9b35a77;transition:width .28s ease}.ranking-progress-detail{margin-top:8px;color:var(--muted);font-size:12px}
+.ranking-progress{width:min(900px,100%);margin:0 0 22px;padding:14px 16px;border:1px solid #383f4d;border-radius:16px;background:rgba(13,16,22,.78);box-shadow:0 12px 32px #0004;text-align:left}.ranking-progress-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:9px}.ranking-progress-title{color:#d7dbe3;font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase}.ranking-progress-value{color:var(--gold);font-size:13px;font-weight:900;white-space:nowrap}.ranking-progress-track{height:8px;position:relative;overflow:visible;border-radius:999px;background:#252b36;box-shadow:inset 0 1px 2px #0008}.ranking-progress-fill{width:0;height:100%;position:relative;z-index:1;border-radius:inherit;background:linear-gradient(90deg,#a87e2d,#f0cd73);box-shadow:0 0 16px #d9b35a77;transition:width .28s ease}.ranking-progress-marker{position:absolute;left:0;bottom:-1px;z-index:2;width:16px;height:38px;object-fit:contain;pointer-events:none;transform:translateX(-50%);filter:drop-shadow(0 2px 5px #0009);transition:left .28s ease}.ranking-progress-detail{margin-top:8px;color:var(--muted);font-size:12px}
 .duel{display:grid;grid-template-columns:1fr 1fr;gap:18px;width:min(900px,100%)}
 .song{border:1px solid var(--line);background:linear-gradient(180deg,#151923,#0d1016);color:var(--text);border-radius:26px;padding:28px 20px;cursor:pointer;min-height:350px;transition:.18s;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}\n.song{position:relative}\n.song-preview{margin-top:14px;width:40px;height:40px;padding:0;border:1px solid #4a5262;background:#0a0d13;color:#d9b35a;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:.18s;position:relative;z-index:2;box-shadow:0 6px 18px #0005}.song-preview:hover{border-color:#d9b35a;background:#141923;transform:translateY(-2px)}.song-preview.playing{background:#d9b35a;color:#0a0b0f;border-color:#d9b35a}.song-preview.unavailable{color:#737b8a;border-color:#303542;cursor:default}.song-preview:disabled{opacity:.65;cursor:wait;transform:none}.preview-icon{width:20px;height:20px;display:block;object-fit:contain}.preview-spinner{width:15px;height:15px;border:2px solid #777f8a;border-top-color:#d9b35a;border-radius:50%;animation:previewSpin .7s linear infinite}.preview-unavailable{font-size:19px;line-height:1}@keyframes previewSpin{to{transform:rotate(360deg)}}
 .song:hover{border-color:#737b8c;transform:translateY(-4px)}
@@ -424,6 +424,7 @@ body:has(.home-screen.active) .logo {
         </div>
         <div class="ranking-progress-track" role="progressbar" aria-label="Progresso do ranking" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="rankingProgressTrack">
           <div class="ranking-progress-fill" id="rankingProgressFill"></div>
+          <img class="ranking-progress-marker" id="rankingProgressMarker" src="assets/mj-progress-icon.svg" alt="" aria-hidden="true">
         </div>
         <div class="ranking-progress-detail" id="rankingProgressDetail">0 de 0 posições definidas</div>
       </div>
@@ -1192,7 +1193,9 @@ function renderRankingProgress(){
   const track=document.getElementById('rankingProgressTrack');
   const percentLabel=document.getElementById('rankingProgressPercent');
   const detail=document.getElementById('rankingProgressDetail');
+  const marker=document.getElementById('rankingProgressMarker');
   if(fill) fill.style.width=`${percent}%`;
+  if(marker) marker.style.left=`${percent}%`;
   if(track) track.setAttribute('aria-valuenow',String(percent));
   if(percentLabel) percentLabel.textContent=`${percent.toLocaleString('pt-BR',{minimumFractionDigits:percent%1?1:0,maximumFractionDigits:1})}%`;
   if(detail) detail.textContent=`${defined} de ${total} separações definidas`;
