@@ -12,11 +12,11 @@
 *{box-sizing:border-box}
 body{margin:0;background:radial-gradient(circle at 50% -10%,#242633 0,#0b0c11 38%,#05060a 100%);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
 button{font:inherit}
-.app{max-width:1180px;margin:auto;padding:28px 24px 56px}
+.app{width:100%;max-width:1180px;margin:0 auto;padding:28px 24px 56px;min-width:0}
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:34px}
 .logo{display:flex;align-items:center;height:32px;padding:0;border:0;background:transparent;cursor:pointer}.logo img{display:block;width:58px;height:32px;object-fit:contain;object-position:left center}.logo:hover img{filter:brightness(1.12)}
 .progress{color:var(--muted);font-size:13px}.rank-button{border:1px solid var(--line);background:#0d1016;color:var(--text);padding:10px 15px;border-radius:999px;cursor:pointer;font-size:12px;font-weight:800}.rank-button:hover{border-color:#737b8c}.rank-modal{position:fixed;inset:0;background:#000b;backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}.rank-modal.open{display:flex}.rank-modal-card{width:min(760px,100%);max-height:88vh;overflow:auto;background:#0d1016;border:1px solid #343a48;border-radius:26px;padding:26px;box-shadow:0 30px 100px #000}.rank-modal-head{display:flex;justify-content:space-between;gap:15px;align-items:start}.rank-modal-head h3{margin:5px 0 4px;font-size:30px;letter-spacing:-.03em}.provisional{color:var(--gold);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:800}.close{border:1px solid var(--line);background:transparent;color:var(--text);width:38px;height:38px;border-radius:50%;cursor:pointer}.modal-note{color:var(--muted);font-size:13px;line-height:1.5;margin:10px 0 18px}.modal-rank-list{border:1px solid var(--line);border-radius:18px;overflow:hidden}.modal-rank-row{display:grid;grid-template-columns:48px 1fr;gap:12px;align-items:center;padding:12px 15px;border-bottom:1px solid var(--line)}.modal-rank-row:last-child{border-bottom:0}.modal-rank-num{font-weight:900;color:#777f8d}.modal-rank-song{font-weight:800}.modal-rank-album{font-size:12px;color:var(--muted);margin-top:3px}.real-img{width:100%;height:250px;object-fit:cover;display:block}.album-cover .real-img{height:100%;aspect-ratio:1}.song .real-img{width:190px;height:190px;border-radius:16px;box-shadow:0 18px 40px #0008;margin-bottom:22px}
-.screen{display:none}.screen.active{display:block}
+.screen{display:none;width:100%;min-width:0}.screen.active{display:block}
 .hero{text-align:center;padding:30px 0 26px}
 .eyebrow{color:var(--gold);letter-spacing:.25em;font-size:12px;font-weight:700;text-transform:uppercase}
 h1{font-size:clamp(38px,7vw,72px);line-height:.95;margin:14px 0 16px;letter-spacing:-.055em}
@@ -55,11 +55,11 @@ h2{font-size:34px;margin:0 0 10px;letter-spacing:-.03em}
 .album-cover img{width:100%;height:100%;object-fit:cover}.album b{display:block}.album small{color:var(--muted)}
 .summary{max-width:760px;margin:34px auto 0;border:1px solid var(--line);background:var(--panel);border-radius:24px;padding:26px}
 .summary-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center;border-bottom:1px solid var(--line);padding:13px 0}.summary-row b{text-align:right}.summary-row:last-child{border-bottom:0}
-.battle{min-height:calc(100vh - 150px);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:28px 0 40px}.battle .question{color:#b9c7dd;text-shadow:0 2px 14px #000}
+.battle{width:100%;min-width:0;min-height:calc(100vh - 150px);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:28px 0 40px}.battle .question{color:#b9c7dd;text-shadow:0 2px 14px #000}
 .question{color:var(--muted);letter-spacing:.18em;text-transform:uppercase;font-size:12px;font-weight:800;margin-bottom:22px}
 .ranking-progress{width:min(900px,100%);margin:0 0 22px;padding:16px 16px 24px;border:1px solid #383f4d;border-radius:16px;background:rgba(13,16,22,.78);box-shadow:0 12px 32px #0004;text-align:left}.ranking-progress-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:9px}.ranking-progress-title{color:#d7dbe3;font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase}.ranking-progress-value{color:var(--gold);font-size:13px;font-weight:900;white-space:nowrap}.ranking-progress-track{height:8px;position:relative;overflow:visible;border-radius:999px;background:#252b36;box-shadow:inset 0 1px 2px #0008}.ranking-progress-fill{width:0;height:100%;position:relative;z-index:1;border-radius:inherit;background:linear-gradient(90deg,#a87e2d,#f0cd73);box-shadow:0 0 16px #d9b35a77;transition:width .28s ease}.ranking-progress-marker{position:absolute;left:0;top:50%;bottom:auto;z-index:2;width:14px;height:30px;object-fit:contain;pointer-events:none;transform:translate(-50%,-50%);filter:drop-shadow(0 2px 5px #0009);transition:left .28s ease}.ranking-progress-detail{margin-top:8px;color:var(--muted);font-size:12px}
-.duel{display:grid;grid-template-columns:1fr 1fr;gap:18px;width:min(900px,100%)}
-.song{border:1px solid var(--line);background:linear-gradient(180deg,#151923,#0d1016);color:var(--text);border-radius:26px;padding:28px 20px;cursor:pointer;min-height:350px;transition:.18s;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.duel{display:grid;grid-template-columns:1fr 1fr;gap:18px;width:100%;max-width:900px;min-width:0}
+.song{width:100%;min-width:0;border:1px solid var(--line);background:linear-gradient(180deg,#151923,#0d1016);color:var(--text);border-radius:26px;padding:28px 20px;cursor:pointer;min-height:350px;transition:.18s;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 .song{position:relative}
 .song-preview{margin-top:14px;width:40px;height:40px;padding:0;border:0;background:transparent !important;color:#d9b35a;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:.18s;position:relative;z-index:2;box-shadow:none !important;appearance:none;-webkit-appearance:none;outline:none}.song-preview:hover{border:0;background:transparent;transform:translateY(-2px)}.song-preview.playing{border:0;background:transparent;color:#d9b35a}.song-preview.unavailable{border:0;background:transparent;color:#737b8a;cursor:default}.song-preview:disabled{opacity:.65;cursor:wait;transform:none}.preview-icon{width:20px;height:20px;display:block;object-fit:contain}.preview-spinner{width:15px;height:15px;border:2px solid #777f8a;border-top-color:#d9b35a;border-radius:50%;animation:previewSpin .7s linear infinite}.preview-unavailable{font-size:19px;line-height:1}@keyframes previewSpin{to{transform:rotate(360deg)}}
 .song:hover{border-color:#737b8c;transform:translateY(-4px)}
@@ -84,7 +84,15 @@ h2{font-size:34px;margin:0 0 10px;letter-spacing:-.03em}
 .badge{font-size:12px;color:var(--muted)}
 .fun{margin-top:24px}.fun-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.fact{padding:18px;border:1px solid var(--line);background:var(--panel);border-radius:18px}.fact b{display:block;margin-bottom:7px}.fact span{color:#c2c7d0;line-height:1.5;font-size:14px}
 @media(max-width:800px){.grid{grid-template-columns:1fr 1fr}.album-grid{grid-template-columns:repeat(2,1fr)}.duel{grid-template-columns:1fr}.song{min-height:280px}.fun-grid{grid-template-columns:1fr}}
-@media(max-width:520px){.summary-row{grid-template-columns:1fr;gap:5px}.summary-row b{text-align:left}.app{padding:20px 14px 40px}.grid{grid-template-columns:1fr}.card{min-height:230px;border-radius:17px}.card img{height:185px}.card-info{left:14px;right:14px;bottom:13px}.card-title{font-size:19px}.card-meta{font-size:12px}.topbar{margin-bottom:15px}.section-head{align-items:start;flex-direction:column}.duel{gap:10px}.song{min-height:220px;padding:18px 14px;border-radius:20px}.song img{width:118px;height:118px;margin-bottom:14px;border-radius:13px}.song-title{font-size:20px}.song-album{font-size:12px;margin-top:6px}.song-preview{margin-top:10px;width:40px;height:40px}.ranking-progress{margin-bottom:14px;padding:13px 13px 22px}.ranking-progress-detail{font-size:11px}}
+@media(max-width:520px){
+  html,body{width:100%;max-width:100%;overflow-x:hidden}
+  .app{width:100%;max-width:100%;padding:20px 14px 40px}
+  .topbar{width:100%;min-width:0}
+  .screen:not(.home-screen){width:100%;max-width:100%;overflow-x:hidden}
+  .battle{width:100%;max-width:100%;padding-left:0;padding-right:0}
+  .duel{width:100%;max-width:100%;grid-template-columns:minmax(0,1fr);gap:10px}
+  .song{width:100%;max-width:100%;min-width:0}
+.summary-row{grid-template-columns:1fr;gap:5px}.summary-row b{text-align:left}.app{padding:20px 14px 40px}.grid{grid-template-columns:1fr}.card{min-height:230px;border-radius:17px}.card img{height:185px}.card-info{left:14px;right:14px;bottom:13px}.card-title{font-size:19px}.card-meta{font-size:12px}.topbar{margin-bottom:15px}.section-head{align-items:start;flex-direction:column}.duel{gap:10px}.song{min-height:220px;padding:18px 14px;border-radius:20px}.song img{width:118px;height:118px;margin-bottom:14px;border-radius:13px}.song-title{font-size:20px}.song-album{font-size:12px;margin-top:6px}.song-preview{margin-top:10px;width:40px;height:40px}.ranking-progress{margin-bottom:14px;padding:13px 13px 22px}.ranking-progress-detail{font-size:11px}}
 
 .local-art{
   width:100%;height:250px;display:flex;align-items:flex-end;justify-content:center;
@@ -1343,48 +1351,71 @@ async function findApplePreview(song){
   if(previewCache.has(key)) return previewCache.get(key);
   const promise=(async()=>{
     try{
-      // Para faixas que já conhecemos no catálogo da Apple, usamos lookup
-      // por trackId em vez de busca textual. Isso evita falsos positivos
-      // quando a API encontra outra gravação com o mesmo/similar título.
+      // Known problematic recordings: use ID lookup first because it is more
+      // precise than a text search.
       const appleTrackIds={
         'Hold My Hand':1631592484,
         'Best of Joy':1631592680,
-        '(I Can\'t Make It) Another Day':1631592683,
+        '(I Can\\'t Make It) Another Day':1631592683,
         'Behind the Mask':1631592685
       };
       const knownTrackId=appleTrackIds[song.title];
       if(knownTrackId){
-        const lookupUrl=`https://itunes.apple.com/lookup?id=${knownTrackId}&entity=song&country=br`;
-        const lookupResponse=await fetch(lookupUrl);
-        if(lookupResponse.ok){
-          const lookupData=await lookupResponse.json();
-          const direct=Array.isArray(lookupData.results)
-            ? lookupData.results.find(r=>r.previewUrl && String(r.trackId)===String(knownTrackId))
-            : null;
-          if(direct) return direct;
+        for(const country of ['br','us']){
+          try{
+            const lookupUrl=`https://itunes.apple.com/lookup?id=${knownTrackId}&entity=song&country=${country}`;
+            const lookupResponse=await fetch(lookupUrl);
+            if(!lookupResponse.ok) continue;
+            const lookupData=await lookupResponse.json();
+            const direct=Array.isArray(lookupData.results)
+              ? lookupData.results.find(r=>r.previewUrl && String(r.trackId)===String(knownTrackId))
+              : null;
+            if(direct) return direct;
+          }catch(_err){}
         }
       }
 
-      // Fallback para as demais músicas: busca textual com validação de
-      // artista e título, incluindo o álbum para reduzir ambiguidades.
-      const term=encodeURIComponent(previewSearchTerm(song));
-      const url=`https://itunes.apple.com/search?term=${term}&country=br&media=music&entity=song&limit=25`;
-      const response=await fetch(url);
-      if(!response.ok) return null;
-      const data=await response.json();
-      const results=Array.isArray(data.results)?data.results:[];
-      const artistResults=results.filter(r=>r.previewUrl && artistMatches(r,song));
-      const target=normalizePreviewText(song.title);
+      // Search by the song title itself instead of combining title + album +
+      // artist. Apple indexes title terms more reliably this way, and we then
+      // validate the returned artist locally.
+      const titleTerms=[
+        song.title,
+        `${song.title} Michael Jackson`
+      ];
+      const countries=['br','us'];
       const aliases={
         'Hold My Hand':['hold my hand with akon','hold my hand duet with akon'],
-        '(I Can\'t Make It) Another Day':['i cant make it another day feat lenny kravitz'],
+        '(I Can\\'t Make It) Another Day':['i cant make it another day feat lenny kravitz'],
         'Behind the Mask':["behind the mask mike s mix demo"]
       };
-      return artistResults.find(r=>{
-        const actual=normalizePreviewText(r.trackName||r.trackCensoredName);
-        return actual===target || (aliases[song.title]||[]).includes(actual);
-      }) || null;
-    }catch(err){ console.warn('Falha ao buscar preview da Apple:',err); return null; }
+      const target=normalizePreviewText(song.title);
+
+      for(const country of countries){
+        for(const rawTerm of titleTerms){
+          try{
+            const term=encodeURIComponent(rawTerm);
+            const url=`https://itunes.apple.com/search?term=${term}&country=${country}&media=music&entity=song&attribute=songTerm&limit=50`;
+            const response=await fetch(url);
+            if(!response.ok) continue;
+            const data=await response.json();
+            const results=Array.isArray(data.results)?data.results:[];
+            const artistResults=results.filter(r=>r.previewUrl && artistMatches(r,song));
+            const match=artistResults.find(r=>{
+              const actual=normalizePreviewText(r.trackName||r.trackCensoredName);
+              return actual===target
+                || actual.startsWith(target+' ')
+                || (aliases[song.title]||[]).includes(actual);
+            });
+            if(match) return match;
+          }catch(_err){}
+        }
+      }
+
+      return null;
+    }catch(err){
+      console.warn('Falha ao buscar preview da Apple:',err);
+      return null;
+    }
   })();
   previewCache.set(key,promise);
   return promise;
