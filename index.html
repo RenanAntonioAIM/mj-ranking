@@ -1090,7 +1090,7 @@ function relation(aId,bId){
   if(ba && !ab) return -1;  // b > a
   return 0;                 // ainda não determinado ou ciclo
 }
-function buildProvisionalOrder(){
+function buildProvisionalOrder(shuffleTies=true){
   // Topological sort of the currently known graph. When more than one
   // song is available, shuffle the tied candidates so the UI does not
   // suggest a false deterministic ranking before the evidence exists.
@@ -1107,9 +1107,11 @@ function buildProvisionalOrder(){
   const available=ids.filter(id=>indegree.get(id)===0);
   const order=[];
   while(available.length){
-    for(let i=available.length-1;i>0;i--){
-      const j=Math.floor(Math.random()*(i+1));
-      [available[i],available[j]]=[available[j],available[i]];
+    if(shuffleTies){
+      for(let i=available.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [available[i],available[j]]=[available[j],available[i]];
+      }
     }
     const id=available.shift();
     order.push(id);
@@ -1168,9 +1170,21 @@ function rankingIsResolved(){
 }
 function getRankingProgress(){
   const total=songs.length;
-  if(!total) return {defined:0,total:0,percent:0};
-  const defined=songs.filter(song=>songs.every(other=>other.id===song.id || relation(song.id,other.id)!==0)).length;
-  return {defined,total,percent:Math.round((defined/total)*100)};
+  if(total<=1) return {defined:total,total:total,percent:total?100:0};
+  // The game finishes when every adjacent boundary in the provisional order
+  // is determined. Count those boundaries instead of requiring each song to
+  // already be comparable with every other song.
+  const order=buildProvisionalOrder(false);
+  let defined=0;
+  for(let i=0;i<order.length-1;i++){
+    if(relation(order[i].id,order[i+1].id)!==0) defined++;
+  }
+  const totalBoundaries=total-1;
+  return {
+    defined,
+    total:totalBoundaries,
+    percent:Math.round((defined/totalBoundaries)*1000)/10
+  };
 }
 function renderRankingProgress(){
   const {defined,total,percent}=getRankingProgress();
@@ -1180,8 +1194,8 @@ function renderRankingProgress(){
   const detail=document.getElementById('rankingProgressDetail');
   if(fill) fill.style.width=`${percent}%`;
   if(track) track.setAttribute('aria-valuenow',String(percent));
-  if(percentLabel) percentLabel.textContent=`${percent}%`;
-  if(detail) detail.textContent=`${defined} de ${total} posições definidas`;
+  if(percentLabel) percentLabel.textContent=`${percent.toLocaleString('pt-BR',{minimumFractionDigits:percent%1?1:0,maximumFractionDigits:1})}%`;
+  if(detail) detail.textContent=`${defined} de ${total} separações definidas`;
 }
 let choiceAnimating=false;
 async function choose(id){
