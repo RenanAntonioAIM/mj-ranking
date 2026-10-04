@@ -383,7 +383,7 @@ body:has(.home-screen.active) .logo {
     <div class="auth-gate-status" id="authGateStatus">Verificando sua sessão…</div>
   </div>
 </div>
-<div class="app-version" id="appVersion">MJ SONG RANKER · v1.5.0 · CATÁLOGO 356</div>
+<div class="app-version" id="appVersion">MJ SONG RANKER · v1.5.1 · CATÁLOGO 356</div>
 <div class="app" id="mainApp">
   <div class="topbar" style="display:none" id="topbar">
     <button class="logo" type="button" aria-label="Voltar ao início" title="Voltar ao início" onclick="go('home')"><img src="assets/image-003.png" alt="MJ Song Ranker"></button>
@@ -498,7 +498,7 @@ body:has(.home-screen.active) .logo {
 <div class="auth-toast" id="authToast"></div>
 
 <script type="module">
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.5.1';
 const CATALOG_VERSION = '356';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -1608,6 +1608,7 @@ function renderCurrentPair(){
       </button>
     </div>`;
   }).join('');
+  prefetchCurrentPairPreviews();
 }
 function openCurrentRanking(){
   if(!songs.length)return;
