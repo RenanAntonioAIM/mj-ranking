@@ -1427,14 +1427,71 @@ async function findApplePreview(song){
         }
       }
 
+      // Fallback: o endpoint de busca legado da Apple pode falhar ou
+      // simplesmente não retornar previews para vários catálogos. O Deezer
+      // oferece previews públicos de 30s e é usado somente quando a Apple
+      // não encontrou uma faixa válida.
+      const deezerResult=await findDeezerPreview(song);
+      if(deezerResult) return deezerResult;
+
       return null;
     }catch(err){
       console.warn('Falha ao buscar preview da Apple:',err);
-      return null;
+      try{
+        return await findDeezerPreview(song);
+      }catch(_err){
+        return null;
+      }
     }
   })();
   previewCache.set(key,promise);
   return promise;
+}
+
+async function findDeezerPreview(song){
+  try{
+    const artists=previewArtistsFor(song);
+    const artist=artists[0]||'Michael Jackson';
+    const queries=[
+      `artist:"${artist}" track:"${song.title}"`,
+      `${song.title} ${artist}`,
+      song.title
+    ];
+    const target=normalizePreviewText(song.title);
+
+    for(const rawQuery of queries){
+      try{
+        const url=`https://api.deezer.com/search?limit=25&q=${encodeURIComponent(rawQuery)}`;
+        const response=await fetch(url);
+        if(!response.ok) continue;
+        const data=await response.json();
+        const results=Array.isArray(data?.data)?data.data:[];
+
+        const candidates=results.filter(r=>{
+          if(!r?.preview || !r?.title) return false;
+          const actual=normalizePreviewText(r.title);
+          const resultArtist=normalizePreviewText(r.artist?.name);
+          const expectedArtists=artists.map(normalizePreviewText);
+          const artistOk=expectedArtists.some(name=>resultArtist===name || resultArtist.includes(name));
+          const titleOk=actual===target || actual.startsWith(target+' ') || target.startsWith(actual+' ');
+          return artistOk && titleOk;
+        });
+
+        if(candidates.length){
+          const r=candidates[0];
+          return {
+            previewUrl:r.preview,
+            trackName:r.title,
+            artistName:r.artist?.name||artist,
+            source:'deezer'
+          };
+        }
+      }catch(_err){}
+    }
+  }catch(err){
+    console.warn('Falha ao buscar preview no Deezer:',err);
+  }
+  return null;
 }
 function stopPreview(){
   if(previewAudio){ previewAudio.pause(); previewAudio.currentTime=0; }
