@@ -498,7 +498,7 @@ body:has(.home-screen.active) .logo {
 <div class="auth-toast" id="authToast"></div>
 
 <script type="module">
-const APP_VERSION = '1.8.2';
+const APP_VERSION = '1.8.3';
 const CATALOG_VERSION = '356';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -1328,15 +1328,11 @@ function nextPair(){
 const previewCache = new Map();
 const previewPersistentCache = new Map();
 
-const previewAppleIds={
-  'Just Good Friends':'559334755',
-  'The Girl Is Mine':'269573208'
-};
 const previewAudioCache = new Map();
 
 function loadPreviewPersistentCache(){
   try{
-    const raw=localStorage.getItem('mj-preview-cache-v2');
+    const raw=localStorage.getItem('mj-preview-cache-v3');
     const data=raw?JSON.parse(raw):{};
     Object.entries(data||{}).forEach(([key,value])=>{
       if(value?.previewUrl) previewPersistentCache.set(key,value);
@@ -1351,7 +1347,7 @@ function savePreviewPersistent(key,value){
   previewPersistentCache.set(key,value);
   try{
     const data=Object.fromEntries(previewPersistentCache);
-    localStorage.setItem('mj-preview-cache-v2',JSON.stringify(data));
+    localStorage.setItem('mj-preview-cache-v3',JSON.stringify(data));
   }catch(err){
     console.warn('Falha ao salvar cache de previews:',err);
   }
@@ -1591,35 +1587,6 @@ async function findApplePreview(song){
       const artistTerms=previewArtistsFor(song);
       let apiError=false;
       let appleRequestSucceeded=false;
-
-      // Faixas com ID Apple explícito ignoram completamente o cache persistente.
-      // Assim, uma URL antiga/ruim nunca impede o lookup do ID correto.
-      const forcedAppleId=previewAppleIds[song.title]||null;
-      if(forcedAppleId){
-        for(const country of ['br','us']){
-          try{
-            const data=await appleJsonp('https://itunes.apple.com/lookup?id='+encodeURIComponent(forcedAppleId)+'&country='+country+'&media=music');
-            const track=Array.isArray(data.results)
-              ? data.results.find(r=>String(r.trackId)===forcedAppleId && r.previewUrl)
-              : null;
-            if(track){
-              const saved={
-                previewUrl:track.previewUrl,
-                trackId:track.trackId,
-                trackName:track.trackName||track.trackCensoredName,
-                artistName:track.artistName||'',
-                source:'apple'
-              };
-              savePreviewPersistent(previewCacheKey(song),saved);
-              previewDiagnostic='RESULT';
-              return saved;
-            }
-          }catch(err){
-            apiError=true;
-            console.warn('Falha no lookup Apple forçado:',err);
-          }
-        }
-      }
 
       const cached=previewPersistentCache.get(previewCacheKey(song));
       if(cached?.previewUrl){
