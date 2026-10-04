@@ -1329,6 +1329,26 @@ const previewCache = new Map();
 let previewAudio = null;
 let previewSongId = null;
 
+function previewArtistsFor(song){
+  if(song.catalog==='Jackson 5') return ['Jackson 5','The Jackson 5'];
+  if(song.catalog==='The Jacksons') return ['The Jacksons'];
+  return ['Michael Jackson'];
+}
+
+function previewSearchTerm(song){
+  return `${song.title} ${song.album} ${previewArtistsFor(song).join(' ')}`;
+}
+
+function previewCacheKey(song){
+  return normalizePreviewText(`${song.catalog}|${song.album}|${song.title}`);
+}
+
+function artistMatches(result,song){
+  const artist=normalizePreviewText(result.artistName);
+  const expected=previewArtistsFor(song).map(normalizePreviewText);
+  return expected.some(name=>artist===name || artist.includes(name));
+}
+
 function normalizePreviewText(value){
   return String(value||'')
     .toLowerCase()
@@ -1339,63 +1359,28 @@ function normalizePreviewText(value){
     .trim();
 }
 
-function previewCacheKey(song){
-  return normalizePreviewText(`${song.catalog}|${song.album}|${song.title}`);
-}
-
-function previewArtist(song){
-  if(song.catalog==='Jackson 5') return 'Jackson 5';
-  if(song.catalog==='The Jacksons') return 'The Jacksons';
-  return 'Michael Jackson';
-}
-
 async function findApplePreview(song){
   const key=previewCacheKey(song);
   if(previewCache.has(key)) return previewCache.get(key);
 
   const promise=(async()=>{
     try{
-      const artist=previewArtist(song);
-      const queries=[
-        `artist:"${artist}" track:"${song.title}"`,
-        `${song.title} ${artist}`,
-        song.title
-      ];
+      const term=encodeURIComponent(previewSearchTerm(song));
+      const url=`https://itunes.apple.com/search?term=${term}&country=br&media=music&entity=song&limit=25`;
+      const response=await fetch(url);
+      if(!response.ok) return null;
 
-      for(const query of queries){
-        try{
-          const url=`https://api.deezer.com/search?q=${encodeURIComponent(query)}&limit=25`;
-          const response=await fetch(url);
-          if(!response.ok) continue;
+      const data=await response.json();
+      const results=Array.isArray(data.results)?data.results:[];
+      const artistResults=results.filter(r=>r.previewUrl && artistMatches(r,song));
+      const target=normalizePreviewText(song.title);
 
-          const data=await response.json();
-          const results=Array.isArray(data.data)?data.data:[];
-
-          const target=normalizePreviewText(song.title);
-          const artistTarget=normalizePreviewText(artist);
-
-          const exact=results.find(r=>{
-            const title=normalizePreviewText(r.title);
-            const resultArtist=normalizePreviewText(r.artist?.name);
-            return Boolean(r.preview)
-              && title===target
-              && resultArtist===artistTarget;
-          });
-
-          if(exact)return {previewUrl:exact.preview};
-
-          const titleMatch=results.find(r=>{
-            const title=normalizePreviewText(r.title);
-            return Boolean(r.preview) && title===target;
-          });
-
-          if(titleMatch)return {previewUrl:titleMatch.preview};
-        }catch(_err){}
-      }
-
-      return null;
+      return artistResults.find(r=>{
+        const actual=normalizePreviewText(r.trackName||r.trackCensoredName);
+        return actual===target || actual.startsWith(target+' ');
+      }) || null;
     }catch(err){
-      console.warn('Falha ao buscar preview:',err);
+      console.warn('Falha ao buscar preview da Apple:',err);
       return null;
     }
   })();
@@ -1408,14 +1393,13 @@ function stopPreview(){
   if(previewAudio){
     previewAudio.pause();
     previewAudio.currentTime=0;
-    previewAudio.removeAttribute('src');
-    previewAudio.load();
   }
 
   if(previewSongId!==null){
     const btn=document.querySelector(`.song-preview[data-song-id="${CSS.escape(String(previewSongId))}"]`);
     if(btn){
       btn.classList.remove('playing');
+      btn.disabled=false;
       btn.innerHTML='<img class="preview-icon" src="assets/play-icon.svg" alt="">';
     }
   }
@@ -1454,11 +1438,8 @@ async function togglePreview(id,event){
     return;
   }
 
-  const audio=new Audio();
-  audio.preload='auto';
-  audio.playsInline=true;
-  audio.src=result.previewUrl;
-
+  const audio=new Audio(result.previewUrl);
+  audio.preload='none';
   previewAudio=audio;
   previewSongId=id;
 
