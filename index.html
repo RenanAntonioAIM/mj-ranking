@@ -1329,24 +1329,10 @@ const previewCache = new Map();
 let previewAudio = null;
 let previewSongId = null;
 
-function previewArtistsFor(song){
-  if(song.catalog==='Jackson 5') return ['Jackson 5','The Jackson 5'];
-  if(song.catalog==='The Jacksons') return ['The Jacksons'];
-  return ['Michael Jackson'];
-}
-
-function previewSearchTerm(song){
-  return `${song.title} ${song.album} ${previewArtistsFor(song).join(' ')}`;
-}
-
-function previewCacheKey(song){
-  return normalizePreviewText(`${song.catalog}|${song.album}|${song.title}`);
-}
-
-function artistMatches(result,song){
-  const artist=normalizePreviewText(result.artistName);
-  const expected=previewArtistsFor(song).map(normalizePreviewText);
-  return expected.some(name=>artist===name || artist.includes(name));
+function previewArtistFor(song){
+  if(song.catalog==='Jackson 5') return 'Jackson 5';
+  if(song.catalog==='The Jacksons') return 'The Jacksons';
+  return 'Michael Jackson';
 }
 
 function normalizePreviewText(value){
@@ -1360,25 +1346,27 @@ function normalizePreviewText(value){
 }
 
 async function findApplePreview(song){
-  const key=previewCacheKey(song);
+  const key=song.id;
   if(previewCache.has(key)) return previewCache.get(key);
 
   const promise=(async()=>{
     try{
-      const term=encodeURIComponent(previewSearchTerm(song));
-      const url=`https://itunes.apple.com/search?term=${term}&country=br&media=music&entity=song&limit=25`;
+      const term=encodeURIComponent(`${song.title} ${previewArtistFor(song)}`);
+      const url=`https://itunes.apple.com/search?term=${term}&country=br&media=music&entity=song&limit=10`;
       const response=await fetch(url);
       if(!response.ok) return null;
 
       const data=await response.json();
-      const results=Array.isArray(data.results)?data.results:[];
-      const artistResults=results.filter(r=>r.previewUrl && artistMatches(r,song));
       const target=normalizePreviewText(song.title);
+      const results=Array.isArray(data.results)?data.results:[];
 
-      return artistResults.find(r=>{
-        const actual=normalizePreviewText(r.trackName||r.trackCensoredName);
-        return actual===target || actual.startsWith(target+' ');
-      }) || null;
+      return results.find(r=>
+        r.previewUrl &&
+        normalizePreviewText(r.trackName||r.trackCensoredName)===target
+      ) || results.find(r=>
+        r.previewUrl &&
+        normalizePreviewText(r.trackName||r.trackCensoredName).includes(target)
+      ) || null;
     }catch(err){
       console.warn('Falha ao buscar preview da Apple:',err);
       return null;
