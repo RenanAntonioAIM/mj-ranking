@@ -498,7 +498,7 @@ body:has(.home-screen.active) .logo {
 <div class="auth-toast" id="authToast"></div>
 
 <script type="module">
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.4.8';
 const CATALOG_VERSION = '356';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -1414,13 +1414,17 @@ async function findApplePreview(song){
         'Hold My Hand':1631592484,
         'Best of Joy':1631592680,
         '(I Can\'t Make It) Another Day':1631592683,
-        'Behind the Mask':1631592685
+        'Behind the Mask':1631592685,
+        'Why':170485704,
+        'Who Do You Know':1641781431
       };
 
       const aliases={
         'Hold My Hand':['hold my hand with akon','hold my hand duet with akon'],
         '(I Can\'t Make It) Another Day':['i cant make it another day feat lenny kravitz'],
-        'Behind the Mask':['behind the mask mike s mix demo']
+        'Behind the Mask':['behind the mask mike s mix demo'],
+        'Why':['why with michael jackson','why feat michael jackson'],
+        'Who Do You Know':['who do you know demo']
       };
 
       const target=normalizePreviewText(song.title);
