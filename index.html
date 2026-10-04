@@ -498,7 +498,7 @@ body:has(.home-screen.active) .logo {
 <div class="auth-toast" id="authToast"></div>
 
 <script type="module">
-const APP_VERSION = '1.4.8';
+const APP_VERSION = '1.4.9';
 const CATALOG_VERSION = '356';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -678,7 +678,7 @@ const ALBUM_IMG = {
   'Music & Me':'assets/image-030.png',
   'Forever, Michael':'assets/image-031.png',
   'Farewell My Summer Love':'assets/image-032.png',
-  'Off the Wall':'assets/image-033.png',
+  'Off the Wall':'assets/off-the-wall-renan.jpg',
   'Thriller':'assets/image-034.png',
   'Bad':'assets/image-035.png',
   'Dangerous':'assets/image-036.png',
@@ -1334,6 +1334,8 @@ function previewArtistsFor(song){
     'We Are the World':['U.S.A. For Africa'],
     'All in Your Name':['Barry Gibb','Michael Jackson'],
     'There Must Be More to Life Than This':['Freddie Mercury','Michael Jackson'],
+    'Get It':['Stevie Wonder','Michael Jackson'],
+    'Mind Is the Magic':['Michael Jackson','Siegfried & Roy'],
     'What More Can I Give':['Michael Jackson'],
     'Why':['3T'],
     'I Need You':['3T'],
@@ -1416,7 +1418,10 @@ async function findApplePreview(song){
         '(I Can\'t Make It) Another Day':1631592683,
         'Behind the Mask':1631592685,
         'Why':170485704,
-        'Who Do You Know':1641781431
+        'Who Do You Know':1641781431,
+        'Get It':1443851007,
+        'She\'s Trouble':1641781520,
+        'Scared of the Moon':1634029572
       };
 
       const aliases={
@@ -1424,7 +1429,11 @@ async function findApplePreview(song){
         '(I Can\'t Make It) Another Day':['i cant make it another day feat lenny kravitz'],
         'Behind the Mask':['behind the mask mike s mix demo'],
         'Why':['why with michael jackson','why feat michael jackson'],
-        'Who Do You Know':['who do you know demo']
+        'Who Do You Know':['who do you know demo'],
+        'Get It':['get it duet with michael jackson','get it feat michael jackson','get it album version feat michael jackson'],
+        'She\'s Trouble':['she\'s trouble demo'],
+        'Scared of the Moon':['scared of the moon demo'],
+        'Mind Is the Magic':['mind is the magic anthem for the las vegas show','mind is the magic michael jackson siegfried roy']
       };
 
       const target=normalizePreviewText(song.title);
