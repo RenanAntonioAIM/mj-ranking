@@ -498,7 +498,7 @@ body:has(.home-screen.active) .logo {
 <div class="auth-toast" id="authToast"></div>
 
 <script type="module">
-const APP_VERSION = '1.6.7';
+const APP_VERSION = '1.6.8';
 const CATALOG_VERSION = '356';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -1326,6 +1326,7 @@ function nextPair(){
   }
 }
 const previewCache = new Map();
+const previewAudioCache = new Map();
 let previewAudio = null;
 let previewSongId = null;
 let previewDiagnostic = '';
@@ -1704,6 +1705,50 @@ function stopPreview(){
   previewSongId=null;
 }
 
+async function preparePreviewAudio(song){
+  if(!song)return null;
+  const cacheKey=String(song.id);
+  if(previewAudioCache.has(cacheKey)) return previewAudioCache.get(cacheKey);
+
+  try{
+    const result=await findApplePreview(song);
+    if(!result?.previewUrl)return null;
+
+    const audio=new Audio();
+    audio.preload='auto';
+    audio.playsInline=true;
+    audio.src=String(result.previewUrl).replace(/^http:/,'https:');
+    audio.load();
+
+    const prepared={audio,result};
+    previewAudioCache.set(cacheKey,prepared);
+    return prepared;
+  }catch(err){
+    console.warn('Falha ao preparar preview:',err);
+    return null;
+  }
+}
+
+function prepareCurrentPairPreviews(){
+  if(!currentPair?.length)return;
+
+  const currentIds=new Set(currentPair.map(s=>String(s.id)));
+  for(const [key,prepared] of previewAudioCache){
+    if(!currentIds.has(key)){
+      try{
+        prepared.audio.pause();
+        prepared.audio.removeAttribute('src');
+        prepared.audio.load();
+      }catch(_err){}
+      previewAudioCache.delete(key);
+    }
+  }
+
+  currentPair.forEach(song=>{
+    preparePreviewAudio(song).catch(()=>{});
+  });
+}
+
 async function togglePreview(id,event){
   event?.preventDefault();
   event?.stopPropagation();
@@ -1733,12 +1778,16 @@ async function togglePreview(id,event){
     return;
   }
 
-  async function playPreviewResult(previewResult,sourceLabel){
+  async function playPreviewResult(previewResult,sourceLabel,preparedAudio=null){
     const previewUrl=String(previewResult.previewUrl).replace(/^http:/,'https:');
-    const audio=new Audio();
+    const audio=preparedAudio||new Audio();
+
     audio.preload='auto';
     audio.playsInline=true;
-    audio.src=previewUrl;
+    if(!preparedAudio){
+      audio.src=previewUrl;
+      audio.load();
+    }
 
     previewAudio=audio;
     previewSongId=id;
@@ -1761,13 +1810,22 @@ async function togglePreview(id,event){
     }
   }
 
-  if(await playPreviewResult(result,result.source||'APPLE')) return;
+  const prepared=previewAudioCache.get(String(song.id));
+  if(await playPreviewResult(result,result.source||'APPLE',prepared?.audio||null)) return;
 
   // Algumas faixas existem na Apple, mas o preview específico pode falhar
   // no iPhone. Nesse caso, tenta o Deezer antes de mostrar o erro.
   stopPreview();
   const fallback=await findDeezerPreview(song);
-  if(fallback?.previewUrl && await playPreviewResult(fallback,'DEEZER')) return;
+  if(fallback?.previewUrl){
+    const fallbackAudio=new Audio();
+    fallbackAudio.preload='auto';
+    fallbackAudio.playsInline=true;
+    fallbackAudio.src=String(fallback.previewUrl).replace(/^http:/,'https:');
+    fallbackAudio.load();
+    previewAudioCache.set(String(song.id),{audio:fallbackAudio,result:fallback});
+    if(await playPreviewResult(fallback,'DEEZER',fallbackAudio)) return;
+  }
 
   stopPreview();
   showPreviewDiagnostic(btn,'PLAY');
@@ -1788,6 +1846,8 @@ function renderCurrentPair(){
       </button>
     </div>`;
   }).join('');
+
+  prepareCurrentPairPreviews();
 }
 function openCurrentRanking(){
   if(!songs.length)return;
