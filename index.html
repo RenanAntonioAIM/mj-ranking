@@ -498,7 +498,7 @@ body:has(.home-screen.active) .logo {
 <div class="auth-toast" id="authToast"></div>
 
 <script type="module">
-const APP_VERSION = '1.8.1';
+const APP_VERSION = '1.8.2';
 const CATALOG_VERSION = '356';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -1592,12 +1592,8 @@ async function findApplePreview(song){
       let apiError=false;
       let appleRequestSucceeded=false;
 
-      const cached=previewPersistentCache.get(previewCacheKey(song));
-      if(cached?.previewUrl){
-        previewDiagnostic='CACHE';
-        return cached;
-      }
-
+      // Faixas com ID Apple explícito ignoram completamente o cache persistente.
+      // Assim, uma URL antiga/ruim nunca impede o lookup do ID correto.
       const forcedAppleId=previewAppleIds[song.title]||null;
       if(forcedAppleId){
         for(const country of ['br','us']){
@@ -1623,6 +1619,12 @@ async function findApplePreview(song){
             console.warn('Falha no lookup Apple forçado:',err);
           }
         }
+      }
+
+      const cached=previewPersistentCache.get(previewCacheKey(song));
+      if(cached?.previewUrl){
+        previewDiagnostic='CACHE';
+        return cached;
       }
 
       const searchTerms=[
