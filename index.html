@@ -383,7 +383,7 @@ body:has(.home-screen.active) .logo {
     <div class="auth-gate-status" id="authGateStatus">Verificando sua sessão…</div>
   </div>
 </div>
-<div class="app-version" id="appVersion">MJ SONG RANKER · v1.5.8 · CATÁLOGO 356</div>
+<div class="app-version" id="appVersion">MJ SONG RANKER · v1.5.9 · CATÁLOGO 356</div>
 <div class="app" id="mainApp">
   <div class="topbar" style="display:none" id="topbar">
     <button class="logo" type="button" aria-label="Voltar ao início" title="Voltar ao início" onclick="go('home')"><img src="assets/image-003.png" alt="MJ Song Ranker"></button>
@@ -498,7 +498,7 @@ body:has(.home-screen.active) .logo {
 <div class="auth-toast" id="authToast"></div>
 
 <script type="module">
-const APP_VERSION = '1.5.8';
+const APP_VERSION = '1.5.9';
 const CATALOG_VERSION = '356';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -1681,33 +1681,44 @@ async function togglePreview(id,event){
     return;
   }
 
-  const previewUrl=String(result.previewUrl).replace(/^http:/,'https:');
-  const audio=new Audio();
-  audio.preload='auto';
-  audio.playsInline=true;
-  audio.src=previewUrl;
+  async function playPreviewResult(previewResult,sourceLabel){
+    const previewUrl=String(previewResult.previewUrl).replace(/^http:/,'https:');
+    const audio=new Audio();
+    audio.preload='auto';
+    audio.playsInline=true;
+    audio.src=previewUrl;
 
-  previewAudio=audio;
-  previewSongId=id;
+    previewAudio=audio;
+    previewSongId=id;
 
-  audio.onended=()=>stopPreview();
-  audio.onerror=()=>{
-    console.warn('MJ preview diagnostic: AUDIO',previewUrl);
-    stopPreview();
-    showPreviewDiagnostic(btn,'AUDIO');
-  };
+    audio.onended=()=>stopPreview();
+    audio.onerror=()=>{
+      console.warn('MJ preview diagnostic: AUDIO',sourceLabel,previewUrl);
+    };
 
-  btn.disabled=false;
-  btn.classList.add('playing');
-  btn.innerHTML='<img class="preview-icon" src="assets/pause-icon.svg" alt="">';
+    btn.disabled=false;
+    btn.classList.add('playing');
+    btn.innerHTML='<img class="preview-icon" src="assets/pause-icon.svg" alt="">';
 
-  try{
-    await audio.play();
-  }catch(err){
-    console.warn('MJ preview diagnostic: PLAY',err);
-    stopPreview();
-    showPreviewDiagnostic(btn,'PLAY');
+    try{
+      await audio.play();
+      return true;
+    }catch(err){
+      console.warn('MJ preview diagnostic: PLAY',sourceLabel,err);
+      return false;
+    }
   }
+
+  if(await playPreviewResult(result,result.source||'APPLE')) return;
+
+  // Algumas faixas existem na Apple, mas o preview específico pode falhar
+  // no iPhone. Nesse caso, tenta o Deezer antes de mostrar o erro.
+  stopPreview();
+  const fallback=await findDeezerPreview(song);
+  if(fallback?.previewUrl && await playPreviewResult(fallback,'DEEZER')) return;
+
+  stopPreview();
+  showPreviewDiagnostic(btn,'PLAY');
 }
 
 function renderCurrentPair(){
