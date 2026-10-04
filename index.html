@@ -1367,64 +1367,24 @@ async function findApplePreview(song){
   if(previewCache.has(key)) return previewCache.get(key);
   const promise=(async()=>{
     try{
-      // Alguns previews funcionam melhor via lookup por trackId; para o restante,
-      // fazemos a busca por título e tentamos BR e US.
-      const appleTrackIds={
-        'Hold My Hand':1631592484,
-        'Best of Joy':1631592680,
-        '(I Can\\'t Make It) Another Day':1631592683,
-        'Behind the Mask':1631592685
-      };
-      const knownTrackId=appleTrackIds[song.title];
-      if(knownTrackId){
-        for(const country of ['br','us']){
-          try{
-            const lookupUrl=`https://itunes.apple.com/lookup?id=${knownTrackId}&entity=song&country=${country}`;
-            const lookupResponse=await fetch(lookupUrl);
-            if(!lookupResponse.ok) continue;
-            const lookupData=await lookupResponse.json();
-            const direct=Array.isArray(lookupData.results)
-              ? lookupData.results.find(r=>r.previewUrl && String(r.trackId)===String(knownTrackId))
-              : null;
-            if(direct) return direct;
-          }catch(_err){}
-        }
-      }
-
-      const titleTerms=[song.title,`${song.title} Michael Jackson`];
-      const countries=['br','us'];
+      const term=encodeURIComponent(previewSearchTerm(song));
+      const url=`https://itunes.apple.com/search?term=${term}&country=br&media=music&entity=song&limit=25`;
+      const response=await fetch(url);
+      if(!response.ok) return null;
+      const data=await response.json();
+      const results=Array.isArray(data.results)?data.results:[];
+      const artistResults=results.filter(r=>r.previewUrl && artistMatches(r,song));
+      const target=normalizePreviewText(song.title);
       const aliases={
         'Hold My Hand':['hold my hand with akon','hold my hand duet with akon'],
-        '(I Can\\'t Make It) Another Day':['i cant make it another day feat lenny kravitz'],
-        'Behind the Mask':['behind the mask mike s mix demo']
+        '(I Can\'t Make It) Another Day':['i cant make it another day feat lenny kravitz'],
+        'Behind the Mask':["behind the mask mike s mix demo"]
       };
-      const target=normalizePreviewText(song.title);
-
-      for(const country of countries){
-        for(const rawTerm of titleTerms){
-          try{
-            const term=encodeURIComponent(rawTerm);
-            const url=`https://itunes.apple.com/search?term=${term}&country=${country}&media=music&entity=song&attribute=songTerm&limit=50`;
-            const response=await fetch(url);
-            if(!response.ok) continue;
-            const data=await response.json();
-            const results=Array.isArray(data.results)?data.results:[];
-            const artistResults=results.filter(r=>r.previewUrl && artistMatches(r,song));
-            const match=artistResults.find(r=>{
-              const actual=normalizePreviewText(r.trackName||r.trackCensoredName);
-              return actual===target
-                || actual.startsWith(target+' ')
-                || (aliases[song.title]||[]).includes(actual);
-            });
-            if(match) return match;
-          }catch(_err){}
-        }
-      }
-      return null;
-    }catch(err){
-      console.warn('Falha ao buscar preview da Apple:',err);
-      return null;
-    }
+      return artistResults.find(r=>{
+        const actual=normalizePreviewText(r.trackName||r.trackCensoredName);
+        return actual===target || (aliases[song.title]||[]).includes(actual);
+      }) || null;
+    }catch(err){ console.warn('Falha ao buscar preview da Apple:',err); return null; }
   })();
   previewCache.set(key,promise);
   return promise;
