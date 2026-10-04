@@ -383,7 +383,7 @@ body:has(.home-screen.active) .logo {
     <div class="auth-gate-status" id="authGateStatus">Verificando sua sessão…</div>
   </div>
 </div>
-<div class="app-version" id="appVersion">MJ SONG RANKER · v1.5.5 · CATÁLOGO 356</div>
+<div class="app-version" id="appVersion">MJ SONG RANKER · v1.5.6 · CATÁLOGO 356</div>
 <div class="app" id="mainApp">
   <div class="topbar" style="display:none" id="topbar">
     <button class="logo" type="button" aria-label="Voltar ao início" title="Voltar ao início" onclick="go('home')"><img src="assets/image-003.png" alt="MJ Song Ranker"></button>
@@ -498,7 +498,7 @@ body:has(.home-screen.active) .logo {
 <div class="auth-toast" id="authToast"></div>
 
 <script type="module">
-const APP_VERSION = '1.5.5';
+const APP_VERSION = '1.5.6';
 const CATALOG_VERSION = '356';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -1457,10 +1457,20 @@ async function findDeezerPreview(song){
           const artist=normalizePreviewText(track.artist.name||'');
           const titleVersion=normalizePreviewText(track.title_version||'');
           return (
-            (title===expectedTitle || title.includes(expectedTitle) || expectedTitle.includes(title)) &&
+            title===expectedTitle &&
             expectedArtists.some(name=>artist===name || artist.includes(name)) &&
             !titleVersion.includes('instrumental')
           );
+        });
+
+        // Para evitar que uma busca ambígua devolva outra música do Michael,
+        // só aceitamos a gravação cujo título corresponde exatamente ao pedido.
+        candidates.sort((a,b)=>{
+          const albumA=normalizePreviewText(a.album?.title||'');
+          const albumB=normalizePreviewText(b.album?.title||'');
+          const expectedAlbum=normalizePreviewText(song.album||'');
+          const score=(album)=>expectedAlbum && (album===expectedAlbum || album.includes(expectedAlbum) || expectedAlbum.includes(album)) ? 1 : 0;
+          return score(albumB)-score(albumA);
         });
 
         if(candidates.length){
