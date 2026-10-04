@@ -498,7 +498,7 @@ body:has(.home-screen.active) .logo {
 <div class="auth-toast" id="authToast"></div>
 
 <script type="module">
-const APP_VERSION = '1.6.4';
+const APP_VERSION = '1.6.5';
 const CATALOG_VERSION = '356';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -1467,7 +1467,9 @@ async function findDeezerPreview(song){
     const artistTerms=previewArtistsFor(song);
     const queries=[
       `${song.title} ${artistTerms.join(' ')}`,
-      `${song.title} Michael Jackson`
+      `${song.title} Michael Jackson`,
+      `${song.title} ${song.album}`,
+      song.title
     ];
 
     for(const rawTerm of [...new Set(queries)]){
@@ -1577,6 +1579,7 @@ async function findApplePreview(song){
       const targetId=appleTrackIds[song.title] ? String(appleTrackIds[song.title]) : null;
       const artistTerms=previewArtistsFor(song);
       let apiError=false;
+      let appleRequestSucceeded=false;
 
       // O álbum Bad tem uma edição 2012 com IDs oficiais estáveis na Apple.
       // Usamos lookup direto para não depender da busca textual, que pode
@@ -1599,7 +1602,9 @@ async function findApplePreview(song){
 
       const searchTerms=[
         `${song.title} ${artistTerms.join(' ')}`,
-        `${song.title} Michael Jackson`
+        `${song.title} Michael Jackson`,
+        `${song.title} ${song.album}`,
+        song.title
       ];
 
       if(song.catalog==='Jackson 5'){
@@ -1617,6 +1622,7 @@ async function findApplePreview(song){
             const term=encodeURIComponent(rawTerm);
             const url=`https://itunes.apple.com/search?term=${term}&country=${country}&media=music&entity=song&limit=50`;
             const data=await appleJsonp(url);
+            appleRequestSucceeded=true;
             const results=Array.isArray(data.results)?data.results:[];
             const candidates=results.filter(r=>r.previewUrl && artistMatches(r,song));
 
@@ -1657,7 +1663,7 @@ async function findApplePreview(song){
         return deezerResult;
       }
 
-      previewDiagnostic=apiError?'API':'SEARCH';
+      previewDiagnostic=apiError && !appleRequestSucceeded?'API':'SEARCH';
       return null;
     }catch(err){
       previewDiagnostic='API';
