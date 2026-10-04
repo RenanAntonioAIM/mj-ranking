@@ -383,7 +383,7 @@ body:has(.home-screen.active) .logo {
     <div class="auth-gate-status" id="authGateStatus">Verificando sua sessão…</div>
   </div>
 </div>
-<div class="app-version" id="appVersion">MJ SONG RANKER · v1.5.1 · CATÁLOGO 356</div>
+<div class="app-version" id="appVersion">MJ SONG RANKER · v1.5.2 · CATÁLOGO 356</div>
 <div class="app" id="mainApp">
   <div class="topbar" style="display:none" id="topbar">
     <button class="logo" type="button" aria-label="Voltar ao início" title="Voltar ao início" onclick="go('home')"><img src="assets/image-003.png" alt="MJ Song Ranker"></button>
@@ -498,7 +498,7 @@ body:has(.home-screen.active) .logo {
 <div class="auth-toast" id="authToast"></div>
 
 <script type="module">
-const APP_VERSION = '1.5.1';
+const APP_VERSION = '1.5.2';
 const CATALOG_VERSION = '356';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -1326,7 +1326,6 @@ function nextPair(){
   }
 }
 const previewCache = new Map();
-const previewAudioCache = new Map();
 let previewAudio = null;
 let previewSongId = null;
 
@@ -1411,35 +1410,40 @@ async function findApplePreview(song){
 
   const promise=(async()=>{
     try{
+      // IDs conhecidos continuam sendo usados para priorizar exatamente
+      // algumas gravações problemáticas, mas sem uma chamada extra de lookup.
       const appleTrackIds={
         'Hold My Hand':1631592484,
         'Best of Joy':1631592680,
-        '(I Can\\'t Make It) Another Day':1631592683,
+        '(I Can\'t Make It) Another Day':1631592683,
         'Behind the Mask':1631592685,
         'Why':170485704,
         'Who Do You Know':1641781431,
         'Get It':1443851007,
-        'She\\'s Trouble':1641781520,
+        'She\'s Trouble':1641781520,
         'Scared of the Moon':1634029572
       };
 
       const aliases={
         'Hold My Hand':['hold my hand with akon','hold my hand duet with akon'],
-        '(I Can\\'t Make It) Another Day':['i cant make it another day feat lenny kravitz'],
+        '(I Can\'t Make It) Another Day':['i cant make it another day feat lenny kravitz'],
         'Behind the Mask':['behind the mask mike s mix demo'],
         'Why':['why with michael jackson','why feat michael jackson'],
         'Who Do You Know':['who do you know demo'],
         'Get It':['get it duet with michael jackson','get it feat michael jackson','get it album version feat michael jackson'],
-        'She\\'s Trouble':['she\\'s trouble demo'],
+        'She\'s Trouble':['she\'s trouble demo'],
         'Scared of the Moon':['scared of the moon demo'],
         'Mind Is the Magic':['mind is the magic anthem for the las vegas show','mind is the magic michael jackson siegfried roy']
       };
 
       const target=normalizePreviewText(song.title);
       const targetId=appleTrackIds[song.title] ? String(appleTrackIds[song.title]) : null;
-      const artistTerms=previewArtistsFor(song);
-      const searchTerms=[`${song.title} ${artistTerms.join(' ')}`,`${song.title} Michael Jackson`];
 
+      const artistTerms=previewArtistsFor(song);
+      const searchTerms=[
+        `${song.title} ${artistTerms.join(' ')}`,
+        `${song.title} Michael Jackson`
+      ];
       if(song.catalog==='Jackson 5'){
         searchTerms.push(
           `${song.title} Jackson 5`,
@@ -1458,16 +1462,19 @@ async function findApplePreview(song){
             const results=Array.isArray(data.results)?data.results:[];
             const candidates=results.filter(r=>r.previewUrl && artistMatches(r,song));
 
+            // 1. Para faixas com ID conhecido, o ID exato vence qualquer outra opção.
             if(targetId){
               const idMatch=candidates.find(r=>String(r.trackId)===targetId);
               if(idMatch)return idMatch;
             }
 
+            // 2. Depois, título exato.
             const exact=candidates.find(r=>
               normalizePreviewText(r.trackName||r.trackCensoredName)===target
             );
             if(exact)return exact;
 
+            // 3. Por fim, aliases específicos das gravações problemáticas.
             const aliasList=aliases[song.title]||[];
             const aliasMatch=candidates.find(r=>
               aliasList.includes(normalizePreviewText(r.trackName||r.trackCensoredName))
@@ -1488,34 +1495,12 @@ async function findApplePreview(song){
   return promise;
 }
 
-async function preparePreview(song){
-  const key=previewCacheKey(song);
-  if(previewAudioCache.has(key)) return previewAudioCache.get(key);
-
-  const result=await findApplePreview(song);
-  if(!result?.previewUrl) return null;
-
-  const audio=new Audio();
-  audio.preload='auto';
-  audio.playsInline=true;
-  audio.src=String(result.previewUrl).replace(/^http:/,'https:');
-  audio.load();
-
-  previewAudioCache.set(key,audio);
-  return audio;
-}
-
-function prefetchCurrentPairPreviews(){
-  if(!currentPair)return;
-  currentPair.forEach(song=>{
-    preparePreview(song).catch(err=>console.warn('Falha ao preparar preview:',err));
-  });
-}
-
 function stopPreview(){
   if(previewAudio){
     previewAudio.pause();
     previewAudio.currentTime=0;
+    previewAudio.removeAttribute('src');
+    previewAudio.load();
   }
 
   if(previewSongId!==null){
@@ -1552,20 +1537,20 @@ async function togglePreview(id,event){
   btn.classList.remove('unavailable');
   btn.innerHTML='<span class="preview-spinner" aria-hidden="true"></span>';
 
-  // O preview é preparado antes do toque, evitando perder a user activation
-  // do iOS enquanto aguardamos a API da Apple.
-  let audio=previewAudioCache.get(previewCacheKey(song));
+  const result=await findApplePreview(song);
 
-  if(!audio){
-    audio=await preparePreview(song);
-  }
-
-  if(!audio){
+  if(!result?.previewUrl){
     btn.disabled=false;
     btn.classList.add('unavailable');
     btn.innerHTML='<span class="preview-unavailable">×</span>';
     return;
   }
+
+  const previewUrl=String(result.previewUrl).replace(/^http:/,'https:');
+  const audio=new Audio();
+  audio.preload='auto';
+  audio.playsInline=true;
+  audio.src=previewUrl;
 
   previewAudio=audio;
   previewSongId=id;
@@ -1608,7 +1593,6 @@ function renderCurrentPair(){
       </button>
     </div>`;
   }).join('');
-  prefetchCurrentPairPreviews();
 }
 function openCurrentRanking(){
   if(!songs.length)return;
