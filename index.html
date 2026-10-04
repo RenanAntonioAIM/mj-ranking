@@ -1348,72 +1348,199 @@ function previewArtistsFor(song){
   if(song.catalog==='The Jacksons') return ['The Jacksons'];
   return ['Michael Jackson'];
 }
+
 function previewSearchTerm(song){
   return `${song.title} ${song.album} ${previewArtistsFor(song).join(' ')}`;
 }
+
 function previewCacheKey(song){
   return normalizePreviewText(`${song.catalog}|${song.album}|${song.title}`);
 }
+
 function artistMatches(result,song){
   const artist=normalizePreviewText(result.artistName);
   const expected=previewArtistsFor(song).map(normalizePreviewText);
   return expected.some(name=>artist===name || artist.includes(name));
 }
+
 function normalizePreviewText(value){
-  return String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
+  return String(value||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
 }
+
+// Apple documents JSONP for cross-site Search API requests. Using a script
+// request avoids relying on fetch/CORS behavior in Safari.
+function appleJsonp(url,timeout=8000){
+  return new Promise((resolve,reject)=>{
+    const callbackName=`mjAppleJsonp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const script=document.createElement('script');
+    let settled=false;
+    const cleanup=()=>{
+      if(script.parentNode) script.parentNode.removeChild(script);
+      try{delete window[callbackName]}catch(_err){window[callbackName]=undefined}
+    };
+    const finish=(fn,value)=>{
+      if(settled)return;
+      settled=true;
+      clearTimeout(timer);
+      cleanup();
+      fn(value);
+    };
+    const timer=setTimeout(()=>finish(reject,new Error('Apple preview timeout')),timeout);
+    window[callbackName]=(data)=>finish(resolve,data);
+    script.onerror=()=>finish(reject,new Error('Apple preview request failed'));
+    script.src=`${url}${url.includes('?')?'&':'?'}callback=${encodeURIComponent(callbackName)}`;
+    script.async=true;
+    document.head.appendChild(script);
+  });
+}
+
 async function findApplePreview(song){
   const key=previewCacheKey(song);
   if(previewCache.has(key)) return previewCache.get(key);
+
   const promise=(async()=>{
     try{
-      const term=encodeURIComponent(previewSearchTerm(song));
-      const url=`https://itunes.apple.com/search?term=${term}&country=br&media=music&entity=song&limit=25`;
-      const response=await fetch(url);
-      if(!response.ok) return null;
-      const data=await response.json();
-      const results=Array.isArray(data.results)?data.results:[];
-      const artistResults=results.filter(r=>r.previewUrl && artistMatches(r,song));
-      const target=normalizePreviewText(song.title);
+      const appleTrackIds={
+        'Hold My Hand':1631592484,
+        'Best of Joy':1631592680,
+        '(I Can\\'t Make It) Another Day':1631592683,
+        'Behind the Mask':1631592685
+      };
+      const knownTrackId=appleTrackIds[song.title];
+
+      // ID lookup is the most precise route for the few known recordings.
+      if(knownTrackId){
+        for(const country of ['br','us']){
+          try{
+            const lookupUrl=`https://itunes.apple.com/lookup?id=${knownTrackId}&entity=song&country=${country}`;
+            const data=await appleJsonp(lookupUrl);
+            const direct=Array.isArray(data.results)
+              ? data.results.find(r=>r.previewUrl && String(r.trackId)===String(knownTrackId))
+              : null;
+            if(direct)return direct;
+          }catch(_err){}
+        }
+      }
+
+      // Keep the original broad search behavior, but use JSONP instead of
+      // fetch so Safari does not depend on cross-origin XHR behavior.
+      const titleTerms=[song.title,`${song.title} Michael Jackson`];
+      const countries=['br','us'];
       const aliases={
         'Hold My Hand':['hold my hand with akon','hold my hand duet with akon'],
-        '(I Can\'t Make It) Another Day':['i cant make it another day feat lenny kravitz'],
-        'Behind the Mask':["behind the mask mike s mix demo"]
+        '(I Can\\'t Make It) Another Day':['i cant make it another day feat lenny kravitz'],
+        'Behind the Mask':['behind the mask mike s mix demo']
       };
-      return artistResults.find(r=>{
-        const actual=normalizePreviewText(r.trackName||r.trackCensoredName);
-        return actual===target || (aliases[song.title]||[]).includes(actual);
-      }) || null;
-    }catch(err){ console.warn('Falha ao buscar preview da Apple:',err); return null; }
+      const target=normalizePreviewText(song.title);
+
+      for(const country of countries){
+        for(const rawTerm of titleTerms){
+          try{
+            const term=encodeURIComponent(rawTerm);
+            const url=`https://itunes.apple.com/search?term=${term}&country=${country}&media=music&entity=song&limit=50`;
+            const data=await appleJsonp(url);
+            const results=Array.isArray(data.results)?data.results:[];
+            const artistResults=results.filter(r=>r.previewUrl && artistMatches(r,song));
+            const match=artistResults.find(r=>{
+              const actual=normalizePreviewText(r.trackName||r.trackCensoredName);
+              return actual===target
+                || actual.startsWith(target+' ')
+                || (aliases[song.title]||[]).includes(actual);
+            });
+            if(match)return match;
+          }catch(_err){}
+        }
+      }
+      return null;
+    }catch(err){
+      console.warn('Falha ao buscar preview da Apple:',err);
+      return null;
+    }
   })();
+
   previewCache.set(key,promise);
   return promise;
 }
+
 function stopPreview(){
-  if(previewAudio){ previewAudio.pause(); previewAudio.currentTime=0; }
+  if(previewAudio){
+    previewAudio.pause();
+    previewAudio.currentTime=0;
+    previewAudio.removeAttribute('src');
+    previewAudio.load();
+  }
   if(previewSongId!==null){
     const btn=document.querySelector(`.song-preview[data-song-id="${CSS.escape(String(previewSongId))}"]`);
-    if(btn){btn.classList.remove('playing');btn.innerHTML='<img class="preview-icon" src="assets/play-icon.svg" alt="">';}
+    if(btn){
+      btn.classList.remove('playing');
+      btn.innerHTML='<img class="preview-icon" src="assets/play-icon.svg" alt="">';
+    }
   }
-  previewAudio=null; previewSongId=null;
+  previewAudio=null;
+  previewSongId=null;
 }
+
 async function togglePreview(id,event){
-  event?.preventDefault(); event?.stopPropagation();
+  event?.preventDefault();
+  event?.stopPropagation();
+
   const song=songs.find(s=>s.id===id);
   if(!song)return;
-  if(previewSongId===id && previewAudio){stopPreview();return;}
+
+  if(previewSongId===id && previewAudio){
+    stopPreview();
+    return;
+  }
+
   stopPreview();
-  const btn=document.querySelector(`.song-preview[data-song-id="${CSS.escape(String(id))}"]`);
+
+  const btn=document.querySelector(`.song-preview[data-song-id="${CSS.escape(String(id))}"`);
   if(!btn)return;
-  btn.disabled=true; btn.innerHTML='<span class="preview-spinner" aria-hidden="true"></span>';
+
+  btn.disabled=true;
+  btn.classList.remove('unavailable');
+  btn.innerHTML='<span class="preview-spinner" aria-hidden="true"></span>';
+
   const result=await findApplePreview(song);
-  if(!result?.previewUrl){btn.disabled=false;btn.classList.add('unavailable');btn.innerHTML='<span class="preview-unavailable">×</span>';return;}
-  const audio=new Audio(result.previewUrl);
-  audio.preload='none'; previewAudio=audio; previewSongId=id;
+
+  if(!result?.previewUrl){
+    btn.disabled=false;
+    btn.classList.add('unavailable');
+    btn.innerHTML='<span class="preview-unavailable">×</span>';
+    return;
+  }
+
+  // Keep a single reusable HTMLAudioElement for the player.
+  // The source is assigned only after the Apple result is confirmed.
+  const audio=new Audio();
+  audio.preload='auto';
+  audio.playsInline=true;
+  audio.src=result.previewUrl;
+
+  previewAudio=audio;
+  previewSongId=id;
+
   audio.onended=()=>stopPreview();
-  audio.onerror=()=>{stopPreview();btn.classList.add('unavailable');btn.innerHTML='<span class="preview-unavailable">×</span>';};
-  btn.disabled=false; btn.classList.add('playing'); btn.innerHTML='<img class="preview-icon" src="assets/pause-icon.svg" alt="">';
-  try{await audio.play();}catch(err){stopPreview();btn.classList.add('unavailable');btn.innerHTML='<span class="preview-unavailable">×</span>';}
+  audio.onerror=()=>{
+    stopPreview();
+    btn.disabled=false;
+    btn.classList.add('unavailable');
+    btn.innerHTML='<span class="preview-unavailable">×</span>';
+  };
+
+  btn.disabled=false;
+  btn.classList.add('playing');
+  btn.innerHTML='<img class="preview-icon" src="assets/pause-icon.svg" alt="">';
+
+  try{
+    await audio.play();
+  }catch(err){
+    console.warn('Falha ao reproduzir preview:',err);
+    stopPreview();
+    btn.disabled=false;
+    btn.classList.add('unavailable');
+    btn.innerHTML='<span class="preview-unavailable">×</span>';
+  }
 }
 function renderCurrentPair(){
   if(!currentPair)return;
