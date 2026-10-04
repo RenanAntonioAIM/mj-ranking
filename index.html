@@ -1367,131 +1367,27 @@ async function findApplePreview(song){
   if(previewCache.has(key)) return previewCache.get(key);
   const promise=(async()=>{
     try{
-      // Known problematic recordings: use ID lookup first because it is more
-      // precise than a text search.
-      const appleTrackIds={
-        'Hold My Hand':1631592484,
-        'Best of Joy':1631592680,
-        '(I Can\'t Make It) Another Day':1631592683,
-        'Behind the Mask':1631592685
-      };
-      const knownTrackId=appleTrackIds[song.title];
-      if(knownTrackId){
-        for(const country of ['br','us']){
-          try{
-            const lookupUrl=`https://itunes.apple.com/lookup?id=${knownTrackId}&entity=song&country=${country}`;
-            const lookupResponse=await fetch(lookupUrl);
-            if(!lookupResponse.ok) continue;
-            const lookupData=await lookupResponse.json();
-            const direct=Array.isArray(lookupData.results)
-              ? lookupData.results.find(r=>r.previewUrl && String(r.trackId)===String(knownTrackId))
-              : null;
-            if(direct) return direct;
-          }catch(_err){}
-        }
-      }
-
-      // Search by the song title itself instead of combining title + album +
-      // artist. Apple indexes title terms more reliably this way, and we then
-      // validate the returned artist locally.
-      const titleTerms=[
-        song.title,
-        `${song.title} Michael Jackson`
-      ];
-      const countries=['br','us'];
+      const term=encodeURIComponent(previewSearchTerm(song));
+      const url=`https://itunes.apple.com/search?term=${term}&country=br&media=music&entity=song&limit=25`;
+      const response=await fetch(url);
+      if(!response.ok) return null;
+      const data=await response.json();
+      const results=Array.isArray(data.results)?data.results:[];
+      const artistResults=results.filter(r=>r.previewUrl && artistMatches(r,song));
+      const target=normalizePreviewText(song.title);
       const aliases={
         'Hold My Hand':['hold my hand with akon','hold my hand duet with akon'],
         '(I Can\'t Make It) Another Day':['i cant make it another day feat lenny kravitz'],
         'Behind the Mask':["behind the mask mike s mix demo"]
       };
-      const target=normalizePreviewText(song.title);
-
-      for(const country of countries){
-        for(const rawTerm of titleTerms){
-          try{
-            const term=encodeURIComponent(rawTerm);
-            const url=`https://itunes.apple.com/search?term=${term}&country=${country}&media=music&entity=song&attribute=songTerm&limit=50`;
-            const response=await fetch(url);
-            if(!response.ok) continue;
-            const data=await response.json();
-            const results=Array.isArray(data.results)?data.results:[];
-            const artistResults=results.filter(r=>r.previewUrl && artistMatches(r,song));
-            const match=artistResults.find(r=>{
-              const actual=normalizePreviewText(r.trackName||r.trackCensoredName);
-              return actual===target
-                || actual.startsWith(target+' ')
-                || (aliases[song.title]||[]).includes(actual);
-            });
-            if(match) return match;
-          }catch(_err){}
-        }
-      }
-
-      // Fallback: o endpoint de busca legado da Apple pode falhar ou
-      // simplesmente não retornar previews para vários catálogos. O Deezer
-      // oferece previews públicos de 30s e é usado somente quando a Apple
-      // não encontrou uma faixa válida.
-      const deezerResult=await findDeezerPreview(song);
-      if(deezerResult) return deezerResult;
-
-      return null;
-    }catch(err){
-      console.warn('Falha ao buscar preview da Apple:',err);
-      try{
-        return await findDeezerPreview(song);
-      }catch(_err){
-        return null;
-      }
-    }
+      return artistResults.find(r=>{
+        const actual=normalizePreviewText(r.trackName||r.trackCensoredName);
+        return actual===target || (aliases[song.title]||[]).includes(actual);
+      }) || null;
+    }catch(err){ console.warn('Falha ao buscar preview da Apple:',err); return null; }
   })();
   previewCache.set(key,promise);
   return promise;
-}
-
-async function findDeezerPreview(song){
-  try{
-    const artists=previewArtistsFor(song);
-    const artist=artists[0]||'Michael Jackson';
-    const queries=[
-      `artist:"${artist}" track:"${song.title}"`,
-      `${song.title} ${artist}`,
-      song.title
-    ];
-    const target=normalizePreviewText(song.title);
-
-    for(const rawQuery of queries){
-      try{
-        const url=`https://api.deezer.com/search?limit=25&q=${encodeURIComponent(rawQuery)}`;
-        const response=await fetch(url);
-        if(!response.ok) continue;
-        const data=await response.json();
-        const results=Array.isArray(data?.data)?data.data:[];
-
-        const candidates=results.filter(r=>{
-          if(!r?.preview || !r?.title) return false;
-          const actual=normalizePreviewText(r.title);
-          const resultArtist=normalizePreviewText(r.artist?.name);
-          const expectedArtists=artists.map(normalizePreviewText);
-          const artistOk=expectedArtists.some(name=>resultArtist===name || resultArtist.includes(name));
-          const titleOk=actual===target || actual.startsWith(target+' ') || target.startsWith(actual+' ');
-          return artistOk && titleOk;
-        });
-
-        if(candidates.length){
-          const r=candidates[0];
-          return {
-            previewUrl:r.preview,
-            trackName:r.title,
-            artistName:r.artist?.name||artist,
-            source:'deezer'
-          };
-        }
-      }catch(_err){}
-    }
-  }catch(err){
-    console.warn('Falha ao buscar preview no Deezer:',err);
-  }
-  return null;
 }
 function stopPreview(){
   if(previewAudio){ previewAudio.pause(); previewAudio.currentTime=0; }
