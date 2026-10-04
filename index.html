@@ -383,7 +383,7 @@ body:has(.home-screen.active) .logo {
     <div class="auth-gate-status" id="authGateStatus">Verificando sua sessão…</div>
   </div>
 </div>
-<div class="app-version" id="appVersion">MJ SONG RANKER · v1.4.6 · CATÁLOGO 356</div>
+<div class="app-version" id="appVersion">MJ SONG RANKER · v1.4.7 · CATÁLOGO 356</div>
 <div class="app" id="mainApp">
   <div class="topbar" style="display:none" id="topbar">
     <button class="logo" type="button" aria-label="Voltar ao início" title="Voltar ao início" onclick="go('home')"><img src="assets/image-003.png" alt="MJ Song Ranker"></button>
@@ -1354,9 +1354,13 @@ function previewCacheKey(song){
 }
 
 function artistMatches(result,song){
-  const artist=normalizePreviewText(result.artistName);
+  const artistFields=[
+    result.artistName,
+    result.collectionArtistName,
+    result.collectionName
+  ].map(normalizePreviewText).filter(Boolean);
   const expected=previewArtistsFor(song).map(normalizePreviewText);
-  return expected.some(name=>artist===name || artist.includes(name));
+  return expected.some(name=>artistFields.some(value=>value===name || value.includes(name)));
 }
 
 function normalizePreviewText(value){
@@ -1422,8 +1426,22 @@ async function findApplePreview(song){
       const target=normalizePreviewText(song.title);
       const targetId=appleTrackIds[song.title] ? String(appleTrackIds[song.title]) : null;
 
+      const artistTerms=previewArtistsFor(song);
+      const searchTerms=[
+        `${song.title} ${artistTerms.join(' ')}`,
+        `${song.title} Michael Jackson`
+      ];
+      if(song.catalog==='Jackson 5'){
+        searchTerms.push(
+          `${song.title} Jackson 5`,
+          `${song.title} The Jackson 5`,
+          `${song.title} ${song.album} Jackson 5`,
+          song.title
+        );
+      }
+
       for(const country of ['br','us']){
-        for(const rawTerm of [`${song.title} ${previewArtistsFor(song).join(' ')}`,`${song.title} Michael Jackson`]){
+        for(const rawTerm of [...new Set(searchTerms)]){
           try{
             const term=encodeURIComponent(rawTerm);
             const url=`https://itunes.apple.com/search?term=${term}&country=${country}&media=music&entity=song&limit=50`;
