@@ -383,7 +383,7 @@ body:has(.home-screen.active) .logo {
     <div class="auth-gate-status" id="authGateStatus">Verificando sua sessão…</div>
   </div>
 </div>
-<div class="app-version" id="appVersion">MJ SONG RANKER · v1.5.3 · CATÁLOGO 356</div>
+<div class="app-version" id="appVersion">MJ SONG RANKER · v1.5.4 · CATÁLOGO 356</div>
 <div class="app" id="mainApp">
   <div class="topbar" style="display:none" id="topbar">
     <button class="logo" type="button" aria-label="Voltar ao início" title="Voltar ao início" onclick="go('home')"><img src="assets/image-003.png" alt="MJ Song Ranker"></button>
@@ -498,7 +498,7 @@ body:has(.home-screen.active) .logo {
 <div class="auth-toast" id="authToast"></div>
 
 <script type="module">
-const APP_VERSION = '1.5.3';
+const APP_VERSION = '1.5.4';
 const CATALOG_VERSION = '356';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -1414,23 +1414,23 @@ async function findApplePreview(song){
       const appleTrackIds={
         'Hold My Hand':1631592484,
         'Best of Joy':1631592680,
-        '(I Can\\'t Make It) Another Day':1631592683,
+        '(I Can\'t Make It) Another Day':1631592683,
         'Behind the Mask':1631592685,
         'Why':170485704,
         'Who Do You Know':1641781431,
         'Get It':1443851007,
-        'She\\'s Trouble':1641781520,
+        'She\'s Trouble':1641781520,
         'Scared of the Moon':1634029572
       };
 
       const aliases={
         'Hold My Hand':['hold my hand with akon','hold my hand duet with akon'],
-        '(I Can\\'t Make It) Another Day':['i cant make it another day feat lenny kravitz'],
+        '(I Can\'t Make It) Another Day':['i cant make it another day feat lenny kravitz'],
         'Behind the Mask':['behind the mask mike s mix demo'],
         'Why':['why with michael jackson','why feat michael jackson'],
         'Who Do You Know':['who do you know demo'],
         'Get It':['get it duet with michael jackson','get it feat michael jackson','get it album version feat michael jackson'],
-        'She\\'s Trouble':['she\\'s trouble demo'],
+        'She\'s Trouble':['she\'s trouble demo'],
         'Scared of the Moon':['scared of the moon demo'],
         'Mind Is the Magic':['mind is the magic anthem for the las vegas show','mind is the magic michael jackson siegfried roy']
       };
