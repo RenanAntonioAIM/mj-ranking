@@ -383,7 +383,7 @@ body:has(.home-screen.active) .logo {
     <div class="auth-gate-status" id="authGateStatus">Verificando sua sessão…</div>
   </div>
 </div>
-<div class="app-version" id="appVersion">MJ SONG RANKER · v1.5.4 · CATÁLOGO 356</div>
+<div class="app-version" id="appVersion">MJ SONG RANKER · v1.5.5 · CATÁLOGO 356</div>
 <div class="app" id="mainApp">
   <div class="topbar" style="display:none" id="topbar">
     <button class="logo" type="button" aria-label="Voltar ao início" title="Voltar ao início" onclick="go('home')"><img src="assets/image-003.png" alt="MJ Song Ranker"></button>
@@ -498,7 +498,7 @@ body:has(.home-screen.active) .logo {
 <div class="auth-toast" id="authToast"></div>
 
 <script type="module">
-const APP_VERSION = '1.5.4';
+const APP_VERSION = '1.5.5';
 const CATALOG_VERSION = '356';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -1405,6 +1405,83 @@ function appleJsonp(url,timeout=8000){
   });
 }
 
+function deezerJsonp(url,timeout=7000){
+  return new Promise((resolve,reject)=>{
+    const callbackName=`mjDeezerJsonp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const script=document.createElement('script');
+    let settled=false;
+    let timer=null;
+
+    const cleanup=()=>{
+      if(script.parentNode) script.parentNode.removeChild(script);
+      try{delete window[callbackName]}catch(_err){window[callbackName]=undefined}
+    };
+
+    const finish=(fn,value)=>{
+      if(settled)return;
+      settled=true;
+      clearTimeout(timer);
+      cleanup();
+      fn(value);
+    };
+
+    timer=setTimeout(()=>finish(reject,new Error('Deezer preview timeout')),timeout);
+    window[callbackName]=(data)=>finish(resolve,data);
+    script.onerror=()=>finish(reject,new Error('Deezer preview request failed'));
+    script.src=`${url}${url.includes('?')?'&':'?'}output=jsonp&callback=${encodeURIComponent(callbackName)}`;
+    script.async=true;
+    document.head.appendChild(script);
+  });
+}
+
+async function findDeezerPreview(song){
+  try{
+    const artistTerms=previewArtistsFor(song);
+    const queries=[
+      `${song.title} ${artistTerms.join(' ')}`,
+      `${song.title} Michael Jackson`
+    ];
+
+    for(const rawTerm of [...new Set(queries)]){
+      try{
+        const url=`https://api.deezer.com/search/track?q=${encodeURIComponent(rawTerm)}&limit=25`;
+        const data=await deezerJsonp(url);
+        const results=Array.isArray(data?.data)?data.data:[];
+
+        const expectedTitle=normalizePreviewText(song.title);
+        const expectedArtists=artistTerms.map(normalizePreviewText);
+
+        const candidates=results.filter(track=>{
+          if(!track?.preview || !track?.artist?.name) return false;
+          const title=normalizePreviewText(track.title||'');
+          const artist=normalizePreviewText(track.artist.name||'');
+          const titleVersion=normalizePreviewText(track.title_version||'');
+          return (
+            (title===expectedTitle || title.includes(expectedTitle) || expectedTitle.includes(title)) &&
+            expectedArtists.some(name=>artist===name || artist.includes(name)) &&
+            !titleVersion.includes('instrumental')
+          );
+        });
+
+        if(candidates.length){
+          return {
+            previewUrl:candidates[0].preview,
+            trackName:candidates[0].title,
+            artistName:candidates[0].artist?.name||'',
+            source:'deezer'
+          };
+        }
+      }catch(err){
+        console.warn('Falha na consulta Deezer:',err);
+      }
+    }
+  }catch(err){
+    console.warn('Falha ao buscar preview no Deezer:',err);
+  }
+
+  return null;
+}
+
 async function findApplePreview(song){
   const key=previewCacheKey(song);
   if(previewCache.has(key)) return previewCache.get(key);
@@ -1492,6 +1569,12 @@ async function findApplePreview(song){
             console.warn('Falha na consulta Apple:',err);
           }
         }
+      }
+
+      const deezerResult=await findDeezerPreview(song);
+      if(deezerResult?.previewUrl){
+        previewDiagnostic='DEEZER';
+        return deezerResult;
       }
 
       previewDiagnostic=apiError?'API':'SEARCH';
