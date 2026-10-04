@@ -383,7 +383,7 @@ body:has(.home-screen.active) .logo {
     <div class="auth-gate-status" id="authGateStatus">Verificando sua sessão…</div>
   </div>
 </div>
-<div class="app-version" id="appVersion">MJ SONG RANKER · v1.4.2 · CATÁLOGO 356</div>
+<div class="app-version" id="appVersion">MJ SONG RANKER · v1.4.3 · CATÁLOGO 356</div>
 <div class="app" id="mainApp">
   <div class="topbar" style="display:none" id="topbar">
     <button class="logo" type="button" aria-label="Voltar ao início" title="Voltar ao início" onclick="go('home')"><img src="assets/image-003.png" alt="MJ Song Ranker"></button>
@@ -1328,7 +1328,7 @@ function nextPair(){
 let previewAudio = null;
 let previewSongId = null;
 
-function findApplePreview(song){
+function searchApplePreview(song,country){
   return new Promise(resolve=>{
     const callbackName='mjPreview_'+Date.now()+'_'+Math.random().toString(36).slice(2);
     const script=document.createElement('script');
@@ -1346,24 +1346,42 @@ function findApplePreview(song){
 
     window[callbackName]=data=>{
       const results=Array.isArray(data?.results)?data.results:[];
-      const target=String(song.title||'').toLowerCase().trim();
 
-      const result=results.find(item=>
+      const target=String(song.title||'').trim().toLowerCase();
+      const michaelResults=results.filter(item=>
         item.previewUrl &&
-        String(item.trackName||'').toLowerCase().trim()===target
-      ) || results.find(item=>item.previewUrl);
+        String(item.artistName||'').toLowerCase().includes('michael jackson')
+      );
 
-      finish(result||null);
+      const exact=michaelResults.find(item=>
+        String(item.trackName||'').trim().toLowerCase()===target
+      );
+
+      const fallback=michaelResults.find(item=>item.previewUrl);
+
+      finish(exact||fallback||null);
     };
 
     script.onerror=()=>finish(null);
 
-    const term=encodeURIComponent(song.title);
-    script.src=`https://itunes.apple.com/search?term=${term}&country=br&media=music&entity=song&limit=25&callback=${callbackName}`;
+    const term=encodeURIComponent(`${song.title} Michael Jackson`);
+    script.src=`https://itunes.apple.com/search?term=${term}&country=${country}&media=music&entity=song&limit=25&callback=${callbackName}`;
 
     timeout=setTimeout(()=>finish(null),8000);
     document.head.appendChild(script);
   });
+}
+
+async function findApplePreview(song){
+  // Primeiro tenta a loja brasileira e, se necessário, a americana.
+  // A busca sempre usa título + Michael Jackson e prioriza título exato.
+  const br=await searchApplePreview(song,'br');
+  if(br?.previewUrl) return br;
+
+  const us=await searchApplePreview(song,'us');
+  if(us?.previewUrl) return us;
+
+  return null;
 }
 
 function stopPreview(){
@@ -1416,8 +1434,6 @@ async function togglePreview(id,event){
     return;
   }
 
-  // Alguns resultados antigos da Apple ainda podem vir com http.
-  // O app roda em HTTPS, então normalizamos para evitar mixed content.
   const previewUrl=String(result.previewUrl).replace(/^http:/,'https:');
   const audio=new Audio();
   audio.preload='auto';
