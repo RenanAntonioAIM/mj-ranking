@@ -1339,10 +1339,41 @@ function normalizePreviewText(value){
   return String(value||'')
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/[\\u0300-\\u036f]/g,'')
     .replace(/&/g,'and')
     .replace(/[^a-z0-9]+/g,' ')
     .trim();
+}
+
+function findApplePreviewJsonp(url){
+  return new Promise(resolve=>{
+    const callbackName='__mjApplePreview_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    const script=document.createElement('script');
+    let settled=false;
+
+    const cleanup=()=>{
+      if(script.parentNode) script.parentNode.removeChild(script);
+      try{ delete window[callbackName]; }catch(_){ window[callbackName]=undefined; }
+    };
+
+    const finish=(result)=>{
+      if(settled)return;
+      settled=true;
+      cleanup();
+      resolve(result);
+    };
+
+    window[callbackName]=data=>{
+      const results=Array.isArray(data?.results)?data.results:[];
+      finish(results.find(r=>r.previewUrl)||null);
+    };
+
+    script.onerror=()=>finish(null);
+    script.src=url+(url.includes('?')?'&':'?')+'callback='+encodeURIComponent(callbackName);
+    document.head.appendChild(script);
+
+    setTimeout(()=>finish(null),8000);
+  });
 }
 
 async function findApplePreview(song){
@@ -1350,27 +1381,42 @@ async function findApplePreview(song){
   if(previewCache.has(key)) return previewCache.get(key);
 
   const promise=(async()=>{
+    const term=encodeURIComponent(song.title);
+    const url=`https://itunes.apple.com/search?term=${term}&country=br&media=music&entity=song&limit=25`;
+    const target=normalizePreviewText(song.title);
+
     try{
-      const term=encodeURIComponent(`${song.title} ${previewArtistFor(song)}`);
-      const url=`https://itunes.apple.com/search?term=${term}&country=br&media=music&entity=song&limit=10`;
       const response=await fetch(url);
-      if(!response.ok) return null;
+      if(response.ok){
+        const data=await response.json();
+        const results=Array.isArray(data.results)?data.results:[];
+        const exact=results.find(r=>
+          r.previewUrl &&
+          normalizePreviewText(r.trackName||r.trackCensoredName)===target
+        );
+        if(exact)return exact;
 
-      const data=await response.json();
-      const target=normalizePreviewText(song.title);
-      const results=Array.isArray(data.results)?data.results:[];
-
-      return results.find(r=>
-        r.previewUrl &&
-        normalizePreviewText(r.trackName||r.trackCensoredName)===target
-      ) || results.find(r=>
-        r.previewUrl &&
-        normalizePreviewText(r.trackName||r.trackCensoredName).includes(target)
-      ) || null;
+        const artist=normalizePreviewText(previewArtistFor(song));
+        const fallback=results.find(r=>
+          r.previewUrl &&
+          normalizePreviewText(r.trackName||r.trackCensoredName).includes(target) &&
+          normalizePreviewText(r.artistName).includes(artist)
+        );
+        if(fallback)return fallback;
+      }
     }catch(err){
-      console.warn('Falha ao buscar preview da Apple:',err);
-      return null;
+      console.warn('Falha no fetch da Apple, tentando fallback:',err);
     }
+
+    const data=await findApplePreviewJsonp(url);
+    const results=Array.isArray(data?.results)?data.results:[];
+    return results.find(r=>
+      r.previewUrl &&
+      normalizePreviewText(r.trackName||r.trackCensoredName)===target
+    ) || results.find(r=>
+      r.previewUrl &&
+      normalizePreviewText(r.trackName||r.trackCensoredName).includes(target)
+    ) || null;
   })();
 
   previewCache.set(key,promise);
@@ -1427,7 +1473,7 @@ async function togglePreview(id,event){
   }
 
   const audio=new Audio(result.previewUrl);
-  audio.preload='none';
+  audio.preload='auto';
   previewAudio=audio;
   previewSongId=id;
 
@@ -1453,6 +1499,7 @@ async function togglePreview(id,event){
     btn.innerHTML='<span class="preview-unavailable">×</span>';
   }
 }
+
 function renderCurrentPair(){
   if(!currentPair)return;
   choiceAnimating=false;
