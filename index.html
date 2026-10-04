@@ -1325,39 +1325,24 @@ function nextPair(){
     finishPromise.finally(()=>{finishPromise=null});
   }
 }
-const previewCache = new Map();
 let previewAudio = null;
 let previewSongId = null;
 
-function previewArtistFor(song){
-  if(song.catalog==='Jackson 5') return 'Jackson 5';
-  if(song.catalog==='The Jacksons') return 'The Jacksons';
-  return 'Michael Jackson';
-}
-
-function normalizePreviewText(value){
-  return String(value||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim();
-}
-
 async function findApplePreview(song){
-  const key=song.id;
-  if(previewCache.has(key)) return previewCache.get(key);
-  const promise=(async()=>{
-    try{
-      const term=encodeURIComponent(`${song.title} ${previewArtistFor(song)}`);
-      const url=`https://itunes.apple.com/search?term=${term}&country=br&media=music&entity=song&limit=10`;
-      const response=await fetch(url);
-      if(!response.ok) return null;
-      const data=await response.json();
-      const target=normalizePreviewText(song.title);
-      const results=Array.isArray(data.results)?data.results:[];
-      return results.find(r=>r.previewUrl && normalizePreviewText(r.trackName||r.trackCensoredName)===target)
-        || results.find(r=>r.previewUrl && normalizePreviewText(r.trackName||r.trackCensoredName).includes(target))
-        || null;
-    }catch(err){ console.warn('Falha ao buscar preview da Apple:',err); return null; }
-  })();
-  previewCache.set(key,promise);
-  return promise;
+  try{
+    const term=encodeURIComponent(song.title);
+    const url=`https://itunes.apple.com/search?term=${term}&country=br&media=music&entity=song&limit=10`;
+    const response=await fetch(url);
+    if(!response.ok)return null;
+
+    const data=await response.json();
+    const results=Array.isArray(data.results)?data.results:[];
+
+    return results.find(result=>result.previewUrl) || null;
+  }catch(error){
+    console.warn('Erro ao buscar preview:',error);
+    return null;
+  }
 }
 
 function stopPreview(){
@@ -1365,14 +1350,16 @@ function stopPreview(){
     previewAudio.pause();
     previewAudio.currentTime=0;
   }
+
   if(previewSongId!==null){
-    const btn=document.querySelector(`.song-preview[data-song-id="${CSS.escape(String(previewSongId))}"]`);
-    if(btn){
-      btn.classList.remove('playing');
-      btn.disabled=false;
-      btn.innerHTML='<img class="preview-icon" src="assets/play-icon.svg" alt="">';
+    const button=document.querySelector(`.song-preview[data-song-id="${CSS.escape(String(previewSongId))}"]`);
+    if(button){
+      button.classList.remove('playing');
+      button.disabled=false;
+      button.innerHTML='<img class="preview-icon" src="assets/play-icon.svg" alt="">';
     }
   }
+
   previewAudio=null;
   previewSongId=null;
 }
@@ -1381,7 +1368,7 @@ async function togglePreview(id,event){
   event?.preventDefault();
   event?.stopPropagation();
 
-  const song=songs.find(s=>s.id===id);
+  const song=songs.find(item=>item.id===id);
   if(!song)return;
 
   if(previewSongId===id && previewAudio){
@@ -1391,43 +1378,49 @@ async function togglePreview(id,event){
 
   stopPreview();
 
-  const btn=document.querySelector(`.song-preview[data-song-id="${CSS.escape(String(id))}"]`);
-  if(!btn)return;
+  const button=document.querySelector(`.song-preview[data-song-id="${CSS.escape(String(id))}"]`);
+  if(!button)return;
 
-  btn.disabled=true;
-  btn.innerHTML='Buscando…';
+  button.disabled=true;
+  button.classList.remove('unavailable');
+  button.innerHTML='<span class="preview-spinner" aria-hidden="true"></span>';
 
   const result=await findApplePreview(song);
 
   if(!result?.previewUrl){
-    btn.disabled=false;
-    btn.classList.add('unavailable');
-    btn.innerHTML='<span class="preview-unavailable">×</span>';
+    button.disabled=false;
+    button.classList.add('unavailable');
+    button.innerHTML='<span class="preview-unavailable">×</span>';
     return;
   }
 
   const audio=new Audio(result.previewUrl);
-  audio.preload='none';
+  audio.preload='auto';
+  audio.volume=1;
+
   previewAudio=audio;
   previewSongId=id;
 
-  audio.onended=()=>stopPreview();
+  audio.onended=stopPreview;
   audio.onerror=()=>{
     stopPreview();
-    btn.classList.add('unavailable');
-    btn.innerHTML='<span class="preview-unavailable">×</span>';
+    button.disabled=false;
+    button.classList.add('unavailable');
+    button.innerHTML='<span class="preview-unavailable">×</span>';
   };
 
-  btn.disabled=false;
-  btn.classList.add('playing');
-  btn.innerHTML='<img class="preview-icon" src="assets/pause-icon.svg" alt="">';
+  button.disabled=false;
+  button.classList.add('playing');
+  button.innerHTML='<img class="preview-icon" src="assets/pause-icon.svg" alt="">';
 
   try{
     await audio.play();
-  }catch(err){
+  }catch(error){
+    console.warn('Erro ao tocar preview:',error);
     stopPreview();
-    btn.classList.add('unavailable');
-    btn.innerHTML='<span class="preview-unavailable">×</span>';
+    button.disabled=false;
+    button.classList.add('unavailable');
+    button.innerHTML='<span class="preview-unavailable">×</span>';
   }
 }
 
