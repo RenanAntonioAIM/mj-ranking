@@ -498,7 +498,7 @@ body:has(.home-screen.active) .logo {
 <div class="auth-toast" id="authToast"></div>
 
 <script type="module">
-const APP_VERSION = '1.6.6';
+const APP_VERSION = '1.6.7';
 const CATALOG_VERSION = '356';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -1581,15 +1581,15 @@ async function findApplePreview(song){
       let apiError=false;
       let appleRequestSucceeded=false;
 
-      // O álbum Bad tem uma edição 2012 com IDs oficiais estáveis na Apple.
-      // Usamos lookup direto para não depender da busca textual, que pode
-      // falhar no iPhone mesmo quando o preview existe.
-      if(targetId && song.album==='Bad'){
+      // Para faixas com ID oficial conhecido, usamos lookup direto.
+      // Isso evita depender da busca textual da Apple, que pode falhar
+      // mesmo quando o preview existe.
+      if(targetId){
         for(const country of ['br','us']){
           try{
             const data=await appleJsonp('https://itunes.apple.com/lookup?id='+encodeURIComponent(targetId)+'&country='+country+'&media=music');
             const track=Array.isArray(data.results)?data.results.find(r=>r.previewUrl):null;
-            if(track && artistMatches(track,song)){
+            if(track){
               previewDiagnostic='RESULT';
               return track;
             }
