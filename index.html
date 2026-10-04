@@ -383,7 +383,7 @@ body:has(.home-screen.active) .logo {
     <div class="auth-gate-status" id="authGateStatus">Verificando sua sessão…</div>
   </div>
 </div>
-<div class="app-version" id="appVersion">MJ SONG RANKER · v1.4.4 · CATÁLOGO 356</div>
+<div class="app-version" id="appVersion">MJ SONG RANKER · v1.4.5 · CATÁLOGO 356</div>
 <div class="app" id="mainApp">
   <div class="topbar" style="display:none" id="topbar">
     <button class="logo" type="button" aria-label="Voltar ao início" title="Voltar ao início" onclick="go('home')"><img src="assets/image-003.png" alt="MJ Song Ranker"></button>
@@ -1348,10 +1348,6 @@ function previewArtistsFor(song){
   return ['Michael Jackson'];
 }
 
-function previewSearchTerm(song){
-  return `${song.title} ${song.album} ${previewArtistsFor(song).join(' ')}`;
-}
-
 function previewCacheKey(song){
   return normalizePreviewText(`${song.catalog}|${song.album}|${song.title}`);
 }
@@ -1407,54 +1403,51 @@ async function findApplePreview(song){
 
   const promise=(async()=>{
     try{
+      // IDs conhecidos continuam sendo usados para priorizar exatamente
+      // algumas gravações problemáticas, mas sem uma chamada extra de lookup.
       const appleTrackIds={
         'Hold My Hand':1631592484,
         'Best of Joy':1631592680,
         '(I Can\'t Make It) Another Day':1631592683,
         'Behind the Mask':1631592685
       };
-      const knownTrackId=appleTrackIds[song.title];
 
-      // Tratamento especial: usa o ID exato quando conhecemos a gravação.
-      if(knownTrackId){
-        for(const country of ['br','us']){
-          try{
-            const lookupUrl=`https://itunes.apple.com/lookup?id=${knownTrackId}&entity=song&country=${country}`;
-            const data=await appleJsonp(lookupUrl);
-            const direct=Array.isArray(data.results)
-              ? data.results.find(r=>r.previewUrl && String(r.trackId)===String(knownTrackId))
-              : null;
-            if(direct)return direct;
-          }catch(_err){}
-        }
-      }
-
-      const titleTerms=[song.title,`${song.title} Michael Jackson`];
-      const countries=['br','us'];
       const aliases={
         'Hold My Hand':['hold my hand with akon','hold my hand duet with akon'],
         '(I Can\'t Make It) Another Day':['i cant make it another day feat lenny kravitz'],
         'Behind the Mask':['behind the mask mike s mix demo']
       };
-      const target=normalizePreviewText(song.title);
 
-      for(const country of countries){
-        for(const rawTerm of titleTerms){
+      const target=normalizePreviewText(song.title);
+      const targetId=appleTrackIds[song.title] ? String(appleTrackIds[song.title]) : null;
+
+      for(const country of ['br','us']){
+        for(const rawTerm of [`${song.title} ${previewArtistsFor(song).join(' ')}`,`${song.title} Michael Jackson`]){
           try{
             const term=encodeURIComponent(rawTerm);
             const url=`https://itunes.apple.com/search?term=${term}&country=${country}&media=music&entity=song&limit=50`;
             const data=await appleJsonp(url);
             const results=Array.isArray(data.results)?data.results:[];
+            const candidates=results.filter(r=>r.previewUrl && artistMatches(r,song));
 
-            const artistResults=results.filter(r=>r.previewUrl && artistMatches(r,song));
-            const match=artistResults.find(r=>{
-              const actual=normalizePreviewText(r.trackName||r.trackCensoredName);
-              return actual===target
-                || actual.startsWith(target+' ')
-                || (aliases[song.title]||[]).includes(actual);
-            });
+            // 1. Para faixas com ID conhecido, o ID exato vence qualquer outra opção.
+            if(targetId){
+              const idMatch=candidates.find(r=>String(r.trackId)===targetId);
+              if(idMatch)return idMatch;
+            }
 
-            if(match)return match;
+            // 2. Depois, título exato.
+            const exact=candidates.find(r=>
+              normalizePreviewText(r.trackName||r.trackCensoredName)===target
+            );
+            if(exact)return exact;
+
+            // 3. Por fim, aliases específicos das gravações problemáticas.
+            const aliasList=aliases[song.title]||[];
+            const aliasMatch=candidates.find(r=>
+              aliasList.includes(normalizePreviewText(r.trackName||r.trackCensoredName))
+            );
+            if(aliasMatch)return aliasMatch;
           }catch(_err){}
         }
       }
@@ -1521,7 +1514,6 @@ async function togglePreview(id,event){
     return;
   }
 
-  // Mantém a correção para páginas HTTPS.
   const previewUrl=String(result.previewUrl).replace(/^http:/,'https:');
   const audio=new Audio();
   audio.preload='auto';
