@@ -1328,21 +1328,42 @@ function nextPair(){
 let previewAudio = null;
 let previewSongId = null;
 
-async function findApplePreview(song){
-  try{
+function findApplePreview(song){
+  return new Promise(resolve=>{
+    const callbackName='mjPreview_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    const script=document.createElement('script');
+    let finished=false;
+
+    function finish(result){
+      if(finished)return;
+      finished=true;
+      clearTimeout(timeout);
+      script.remove();
+      try{delete window[callbackName]}catch(_){window[callbackName]=undefined}
+      resolve(result);
+    }
+
+    window[callbackName]=data=>{
+      const results=Array.isArray(data?.results)?data.results:[];
+      const target=String(song.title||'').toLowerCase().trim();
+
+      const result=results.find(item=>
+        item.previewUrl &&
+        String(item.trackName||'').toLowerCase().trim()===target
+      ) || results.find(item=>item.previewUrl);
+
+      finish(result||null);
+    };
+
+    script.onerror=()=>finish(null);
+
     const term=encodeURIComponent(song.title);
-    const url=`https://itunes.apple.com/search?term=${term}&country=br&media=music&entity=song&limit=10`;
-    const response=await fetch(url);
-    if(!response.ok)return null;
+    script.src=`https://itunes.apple.com/search?term=${term}&country=br&media=music&entity=song&limit=25&callback=${callbackName}`;
 
-    const data=await response.json();
-    const results=Array.isArray(data.results)?data.results:[];
+    document.head.appendChild(script);
 
-    return results.find(result=>result.previewUrl) || null;
-  }catch(error){
-    console.warn('Erro ao buscar preview:',error);
-    return null;
-  }
+    const timeout=setTimeout(()=>finish(null),8000);
+  });
 }
 
 function stopPreview(){
@@ -1401,7 +1422,7 @@ async function togglePreview(id,event){
   previewAudio=audio;
   previewSongId=id;
 
-  audio.onended=stopPreview;
+  audio.onended=()=>stopPreview();
   audio.onerror=()=>{
     stopPreview();
     button.disabled=false;
