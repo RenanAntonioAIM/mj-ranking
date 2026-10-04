@@ -498,7 +498,7 @@ body:has(.home-screen.active) .logo {
 <div class="auth-toast" id="authToast"></div>
 
 <script type="module">
-const APP_VERSION = '1.7.1';
+const APP_VERSION = '1.7.2';
 const CATALOG_VERSION = '356';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -1541,7 +1541,7 @@ async function findApplePreview(song){
         'Get It':1443851007,
         'She\'s Trouble':1641781520,
         'Scared of the Moon':1634029572,
-        'The Girl Is Mine':269573304,
+        'The Girl Is Mine':269573208,
         'Little Susie':310505603,
         'Bad':559334750,
         'The Way You Make Me Feel':559334752,
@@ -1594,7 +1594,9 @@ async function findApplePreview(song){
         for(const country of ['br','us']){
           try{
             const data=await appleJsonp('https://itunes.apple.com/lookup?id='+encodeURIComponent(targetId)+'&country='+country+'&media=music');
-            const track=Array.isArray(data.results)?data.results.find(r=>r.previewUrl):null;
+            const track=Array.isArray(data.results)
+              ? data.results.find(r=>String(r.trackId)===targetId && r.previewUrl)
+              : null;
             if(track){
               previewDiagnostic='RESULT';
               return track;
