@@ -498,7 +498,7 @@ body:has(.home-screen.active) .logo {
 <div class="auth-toast" id="authToast"></div>
 
 <script type="module">
-const APP_VERSION = '1.6.8';
+const APP_VERSION = '1.6.9';
 const CATALOG_VERSION = '356';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -1330,6 +1330,7 @@ const previewAudioCache = new Map();
 let previewAudio = null;
 let previewSongId = null;
 let previewDiagnostic = '';
+let previewRequestToken = 0;
 
 function previewArtistsFor(song){
   const collaborationArtists={
@@ -1685,11 +1686,10 @@ function showPreviewDiagnostic(btn,code){
 }
 
 function stopPreview(){
+  previewRequestToken++;
   if(previewAudio){
     previewAudio.pause();
-    previewAudio.currentTime=0;
-    previewAudio.removeAttribute('src');
-    previewAudio.load();
+    try{previewAudio.currentTime=0}catch(_err){}
   }
 
   if(previewSongId!==null){
@@ -1762,6 +1762,7 @@ async function togglePreview(id,event){
   }
 
   stopPreview();
+  const requestToken=previewRequestToken;
   previewDiagnostic='';
 
   const btn=document.querySelector(`.song-preview[data-song-id="${CSS.escape(String(id))}"]`);
@@ -1772,6 +1773,8 @@ async function togglePreview(id,event){
   btn.innerHTML='<span class="preview-spinner" aria-hidden="true"></span>';
 
   const result=await findApplePreview(song);
+
+  if(requestToken!==previewRequestToken)return;
 
   if(!result?.previewUrl){
     showPreviewDiagnostic(btn,previewDiagnostic||'SEARCH');
@@ -1789,6 +1792,11 @@ async function togglePreview(id,event){
       audio.load();
     }
 
+    if(requestToken!==previewRequestToken){
+      try{audio.pause()}catch(_err){}
+      return false;
+    }
+
     previewAudio=audio;
     previewSongId=id;
 
@@ -1803,6 +1811,10 @@ async function togglePreview(id,event){
 
     try{
       await audio.play();
+      if(requestToken!==previewRequestToken){
+        try{audio.pause()}catch(_err){}
+        return false;
+      }
       return true;
     }catch(err){
       console.warn('MJ preview diagnostic: PLAY',sourceLabel,err);
@@ -1815,8 +1827,10 @@ async function togglePreview(id,event){
 
   // Algumas faixas existem na Apple, mas o preview específico pode falhar
   // no iPhone. Nesse caso, tenta o Deezer antes de mostrar o erro.
+  if(requestToken!==previewRequestToken)return;
   stopPreview();
   const fallback=await findDeezerPreview(song);
+  if(requestToken!==previewRequestToken)return;
   if(fallback?.previewUrl){
     const fallbackAudio=new Audio();
     fallbackAudio.preload='auto';
