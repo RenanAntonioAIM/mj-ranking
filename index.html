@@ -383,7 +383,7 @@ body:has(.home-screen.active) .logo {
     <div class="auth-gate-status" id="authGateStatus">Verificando sua sessão…</div>
   </div>
 </div>
-<div class="app-version" id="appVersion">MJ SONG RANKER · v1.4.3 · CATÁLOGO 356</div>
+<div class="app-version" id="appVersion">MJ SONG RANKER · v1.4.4 · CATÁLOGO 356</div>
 <div class="app" id="mainApp">
   <div class="topbar" style="display:none" id="topbar">
     <button class="logo" type="button" aria-label="Voltar ao início" title="Voltar ao início" onclick="go('home')"><img src="assets/image-003.png" alt="MJ Song Ranker"></button>
@@ -1328,74 +1328,162 @@ function nextPair(){
 let previewAudio = null;
 let previewSongId = null;
 
-function searchApplePreview(song,country){
-  return new Promise(resolve=>{
-    const callbackName='mjPreview_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+function previewArtistsFor(song){
+  const collaborationArtists={
+    'We Are the World':['U.S.A. For Africa'],
+    'All in Your Name':['Barry Gibb','Michael Jackson'],
+    'There Must Be More to Life Than This':['Freddie Mercury','Michael Jackson'],
+    'What More Can I Give':['Michael Jackson'],
+    'Why':['3T'],
+    'I Need You':['3T'],
+    'Tell Me I’m Not Dreaming (Too Good to Be True)':['Jermaine Jackson'],
+    'Whatzupwitu':['Eddie Murphy'],
+    'Eaten Alive':['Diana Ross'],
+    'Say Say Say':['Paul McCartney','Michael Jackson'],
+    'The Man':['Paul McCartney','Michael Jackson']
+  };
+  if(collaborationArtists[song.title]) return collaborationArtists[song.title];
+  if(song.catalog==='Jackson 5') return ['Jackson 5','The Jackson 5'];
+  if(song.catalog==='The Jacksons') return ['The Jacksons'];
+  return ['Michael Jackson'];
+}
+
+function previewSearchTerm(song){
+  return `${song.title} ${song.album} ${previewArtistsFor(song).join(' ')}`;
+}
+
+function previewCacheKey(song){
+  return normalizePreviewText(`${song.catalog}|${song.album}|${song.title}`);
+}
+
+function artistMatches(result,song){
+  const artist=normalizePreviewText(result.artistName);
+  const expected=previewArtistsFor(song).map(normalizePreviewText);
+  return expected.some(name=>artist===name || artist.includes(name));
+}
+
+function normalizePreviewText(value){
+  return String(value||'')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\\u0300-\\u036f]/g,'')
+    .replace(/&/g,'and')
+    .replace(/[^a-z0-9]+/g,' ')
+    .trim();
+}
+
+function appleJsonp(url,timeout=8000){
+  return new Promise((resolve,reject)=>{
+    const callbackName=`mjAppleJsonp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const script=document.createElement('script');
-    let finished=false;
-    let timeout=null;
+    let settled=false;
+    let timer=null;
 
-    function finish(result){
-      if(finished)return;
-      finished=true;
-      if(timeout) clearTimeout(timeout);
-      script.remove();
-      try{delete window[callbackName]}catch(_){window[callbackName]=undefined}
-      resolve(result);
-    }
-
-    window[callbackName]=data=>{
-      const results=Array.isArray(data?.results)?data.results:[];
-
-      const target=String(song.title||'').trim().toLowerCase();
-      const michaelResults=results.filter(item=>
-        item.previewUrl &&
-        String(item.artistName||'').toLowerCase().includes('michael jackson')
-      );
-
-      const exact=michaelResults.find(item=>
-        String(item.trackName||'').trim().toLowerCase()===target
-      );
-
-      const fallback=michaelResults.find(item=>item.previewUrl);
-
-      finish(exact||fallback||null);
+    const cleanup=()=>{
+      if(script.parentNode) script.parentNode.removeChild(script);
+      try{delete window[callbackName]}catch(_err){window[callbackName]=undefined}
     };
 
-    script.onerror=()=>finish(null);
+    const finish=(fn,value)=>{
+      if(settled)return;
+      settled=true;
+      clearTimeout(timer);
+      cleanup();
+      fn(value);
+    };
 
-    const term=encodeURIComponent(`${song.title} Michael Jackson`);
-    script.src=`https://itunes.apple.com/search?term=${term}&country=${country}&media=music&entity=song&limit=25&callback=${callbackName}`;
-
-    timeout=setTimeout(()=>finish(null),8000);
+    timer=setTimeout(()=>finish(reject,new Error('Apple preview timeout')),timeout);
+    window[callbackName]=(data)=>finish(resolve,data);
+    script.onerror=()=>finish(reject,new Error('Apple preview request failed'));
+    script.src=`${url}${url.includes('?')?'&':'?'}callback=${encodeURIComponent(callbackName)}`;
+    script.async=true;
     document.head.appendChild(script);
   });
 }
 
 async function findApplePreview(song){
-  // Primeiro tenta a loja brasileira e, se necessário, a americana.
-  // A busca sempre usa título + Michael Jackson e prioriza título exato.
-  const br=await searchApplePreview(song,'br');
-  if(br?.previewUrl) return br;
+  const key=previewCacheKey(song);
+  if(previewCache.has(key)) return previewCache.get(key);
 
-  const us=await searchApplePreview(song,'us');
-  if(us?.previewUrl) return us;
+  const promise=(async()=>{
+    try{
+      const appleTrackIds={
+        'Hold My Hand':1631592484,
+        'Best of Joy':1631592680,
+        '(I Can\'t Make It) Another Day':1631592683,
+        'Behind the Mask':1631592685
+      };
+      const knownTrackId=appleTrackIds[song.title];
 
-  return null;
+      // Tratamento especial: usa o ID exato quando conhecemos a gravação.
+      if(knownTrackId){
+        for(const country of ['br','us']){
+          try{
+            const lookupUrl=`https://itunes.apple.com/lookup?id=${knownTrackId}&entity=song&country=${country}`;
+            const data=await appleJsonp(lookupUrl);
+            const direct=Array.isArray(data.results)
+              ? data.results.find(r=>r.previewUrl && String(r.trackId)===String(knownTrackId))
+              : null;
+            if(direct)return direct;
+          }catch(_err){}
+        }
+      }
+
+      const titleTerms=[song.title,`${song.title} Michael Jackson`];
+      const countries=['br','us'];
+      const aliases={
+        'Hold My Hand':['hold my hand with akon','hold my hand duet with akon'],
+        '(I Can\'t Make It) Another Day':['i cant make it another day feat lenny kravitz'],
+        'Behind the Mask':['behind the mask mike s mix demo']
+      };
+      const target=normalizePreviewText(song.title);
+
+      for(const country of countries){
+        for(const rawTerm of titleTerms){
+          try{
+            const term=encodeURIComponent(rawTerm);
+            const url=`https://itunes.apple.com/search?term=${term}&country=${country}&media=music&entity=song&limit=50`;
+            const data=await appleJsonp(url);
+            const results=Array.isArray(data.results)?data.results:[];
+
+            const artistResults=results.filter(r=>r.previewUrl && artistMatches(r,song));
+            const match=artistResults.find(r=>{
+              const actual=normalizePreviewText(r.trackName||r.trackCensoredName);
+              return actual===target
+                || actual.startsWith(target+' ')
+                || (aliases[song.title]||[]).includes(actual);
+            });
+
+            if(match)return match;
+          }catch(_err){}
+        }
+      }
+
+      return null;
+    }catch(err){
+      console.warn('Falha ao buscar preview da Apple:',err);
+      return null;
+    }
+  })();
+
+  previewCache.set(key,promise);
+  return promise;
 }
 
 function stopPreview(){
   if(previewAudio){
     previewAudio.pause();
     previewAudio.currentTime=0;
+    previewAudio.removeAttribute('src');
+    previewAudio.load();
   }
 
   if(previewSongId!==null){
-    const button=document.querySelector(`.song-preview[data-song-id="${CSS.escape(String(previewSongId))}"]`);
-    if(button){
-      button.classList.remove('playing');
-      button.disabled=false;
-      button.innerHTML='<img class="preview-icon" src="assets/play-icon.svg" alt="">';
+    const btn=document.querySelector(`.song-preview[data-song-id="${CSS.escape(String(previewSongId))}"]`);
+    if(btn){
+      btn.classList.remove('playing');
+      btn.disabled=false;
+      btn.innerHTML='<img class="preview-icon" src="assets/play-icon.svg" alt="">';
     }
   }
 
@@ -1407,7 +1495,7 @@ async function togglePreview(id,event){
   event?.preventDefault();
   event?.stopPropagation();
 
-  const song=songs.find(item=>item.id===id);
+  const song=songs.find(s=>s.id===id);
   if(!song)return;
 
   if(previewSongId===id && previewAudio){
@@ -1417,27 +1505,27 @@ async function togglePreview(id,event){
 
   stopPreview();
 
-  const button=document.querySelector(`.song-preview[data-song-id="${CSS.escape(String(id))}"]`);
-  if(!button)return;
+  const btn=document.querySelector(`.song-preview[data-song-id="${CSS.escape(String(id))}"]`);
+  if(!btn)return;
 
-  button.disabled=true;
-  button.classList.remove('unavailable');
-  button.innerHTML='<span class="preview-spinner" aria-hidden="true"></span>';
+  btn.disabled=true;
+  btn.classList.remove('unavailable');
+  btn.innerHTML='<span class="preview-spinner" aria-hidden="true"></span>';
 
   const result=await findApplePreview(song);
 
   if(!result?.previewUrl){
-    console.warn('Preview Apple não encontrado:',song.title);
-    button.disabled=false;
-    button.classList.add('unavailable');
-    button.innerHTML='<span class="preview-unavailable">×</span>';
+    btn.disabled=false;
+    btn.classList.add('unavailable');
+    btn.innerHTML='<span class="preview-unavailable">×</span>';
     return;
   }
 
+  // Mantém a correção para páginas HTTPS.
   const previewUrl=String(result.previewUrl).replace(/^http:/,'https:');
   const audio=new Audio();
   audio.preload='auto';
-  audio.volume=1;
+  audio.playsInline=true;
   audio.src=previewUrl;
 
   previewAudio=audio;
@@ -1445,25 +1533,24 @@ async function togglePreview(id,event){
 
   audio.onended=()=>stopPreview();
   audio.onerror=()=>{
-    console.warn('Falha ao carregar preview Apple:',previewUrl);
     stopPreview();
-    button.disabled=false;
-    button.classList.add('unavailable');
-    button.innerHTML='<span class="preview-unavailable">×</span>';
+    btn.disabled=false;
+    btn.classList.add('unavailable');
+    btn.innerHTML='<span class="preview-unavailable">×</span>';
   };
 
-  button.disabled=false;
-  button.classList.add('playing');
-  button.innerHTML='<img class="preview-icon" src="assets/pause-icon.svg" alt="">';
+  btn.disabled=false;
+  btn.classList.add('playing');
+  btn.innerHTML='<img class="preview-icon" src="assets/pause-icon.svg" alt="">';
 
   try{
     await audio.play();
-  }catch(error){
-    console.warn('Erro ao tocar preview:',error);
+  }catch(err){
+    console.warn('Falha ao reproduzir preview:',err);
     stopPreview();
-    button.disabled=false;
-    button.classList.add('unavailable');
-    button.innerHTML='<span class="preview-unavailable">×</span>';
+    btn.disabled=false;
+    btn.classList.add('unavailable');
+    btn.innerHTML='<span class="preview-unavailable">×</span>';
   }
 }
 
